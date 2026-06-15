@@ -1,0 +1,319 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+\usepackage[margin=1in]{geometry}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\usepackage{authblk}
+
+\title{\textbf{Sparse Counterfactual Attribution of Crop-Yield Anomalies\\
+to Extreme-Weather Drivers: A United States Study (1990--2025)}}
+\author[1]{Tran Dai Phong Lam\thanks{Corresponding author: phonglam2599@gmail.com}}
+\author[1]{Thu Le}
+\author[1]{Nguyen Quoc Hung}
+\author[1]{Nguyen Trung Trinh}
+\affil[1]{FPT University, Ho Chi Minh City, Vietnam}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Most crop-yield machine-learning studies optimize average predictive accuracy, yet
+the years that matter most for food security and risk management are the abnormal
+ones: regional crop failures. Average-accuracy models rarely say \emph{why} a
+particular crop-region-year collapsed, or \emph{which} weather extreme was
+responsible. We propose Sparse Counterfactual Anomaly Attribution (SCAA), an
+event-level explanation method that detects low-yield anomalies and attributes each
+one to a small, feasible set of extreme-weather drivers. Daily NASA POWER weather
+(1989--2025), harmonized across twelve U.S.\ states and aggregated over
+hemisphere-correct, crop-specific growing-season windows, is merged with USDA NASS
+yields for Barley, Canola, Oats and Wheat. A forward-time gradient-tree model
+predicts yield with a test $R^2$ of 0.809 (2016--2021) and 0.808 on an extended
+2019--2025 horizon. Each crop-region yield series is detrended to separate
+technological drift from weather-driven variation; years whose detrended residual
+falls below $-1$ standard deviation are flagged as anomalies (215 of 1{,}227
+observations, 17.5\%). For each anomaly, a sparse, feasibility-constrained
+counterfactual computes the minimal weather change that would restore predicted
+yield to its trend, yielding (i) a dominant driver and (ii) a weather-recoverable
+fraction of the yield gap. Across anomalies the median recoverable fraction is 0.86,
+and 89\% are classified as weather-driven; the remaining 11\% are flagged as
+not weather-explainable, a useful signal for non-meteorological causes. Attribution
+is validated against known events: the 2012 drought anomalies are attributed to heat
+and growing-degree-day extremes, and the severe 2021--2022 anomalies to dry-spell and
+moisture extremes; anomaly counts peak in the documented drought years 2002, 2011,
+2021 and 2022. SCAA turns a black-box yield model into an interpretable,
+event-level attribution tool. Results are predictive associations, not causal effects.
+
+\smallskip
+\noindent\textbf{Keywords:} crop yield; extreme weather; counterfactual explanation;
+anomaly detection; interpretable machine learning; United States.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+Crop-yield prediction is dominated by models that minimize average error over all
+crop-region-years \citep{vanKlompenburg2020CropYieldReview,Jabed2024Comprehensive}.
+For planning and risk management, however, the decisive years are the abnormal ones:
+the regional failures that strain supply and reveal climate vulnerability. An
+average-accuracy model rarely answers the two questions a planner actually asks about
+such a year: \emph{why} did this crop-region collapse, and \emph{which} weather
+extreme was responsible? Global feature-importance scores describe the model in
+aggregate, not the individual event.
+
+This study reframes weather--yield interpretation as \emph{event-level attribution}.
+We propose Sparse Counterfactual Anomaly Attribution (SCAA): detect low-yield
+anomalies, then attribute each to a small, feasible set of extreme-weather drivers
+using a sparse counterfactual. The method answers, for a specific bad year, ``the
+smallest weather change that would have made this year normal,'' and identifies the
+weather indicators that change. The approach is organized around three questions:
+\begin{itemize}
+\item \textbf{RQ1.} After separating long-run trend from year-to-year variation, which
+crop-region-years are genuine low-yield anomalies?
+\item \textbf{RQ2.} What fraction of each anomaly is recoverable by feasible weather
+change, and which extreme-weather indicator is its dominant driver?
+\item \textbf{RQ3.} Do the attributions agree with documented drought and heat events?
+\end{itemize}
+The contribution is a method that ports sparse counterfactual explanation
+\citep{Mothilal2020DiCE} from instance-level classification to event-level yield-anomaly
+attribution, with a continuous weather-recoverable fraction that also flags anomalies
+that weather cannot explain. We study Barley, Canola, Oats and Wheat across twelve
+U.S.\ states, 1990--2025, on a source-harmonized daily-weather record. All results are
+predictive associations and planning signals, not causal effects.
+
+\section{Related Work}
+\label{sec:related}
+Machine learning for yield prediction has been reviewed extensively, with weather,
+soil and historical yield as common inputs across classical and deep models
+\citep{vanKlompenburg2020CropYieldReview,Meghraoui2024DLReview,Jabed2024Comprehensive};
+because no single model dominates across crops and regions, comparative studies are
+standard \citep{Iniyan2023Techniques,Mahesh2024Gradient}. Interpretability work warns
+that black-box yield models can mislead climate and planning conclusions without
+careful, domain-aware explanation \citep{Hu2023ExplainableYield,Mohan2025AIXAI}.
+Counterfactual explanation---minimal, feasible input changes that alter a
+prediction---is a standard post-hoc tool \citep{Mothilal2020DiCE}; we adapt its
+feasibility and sparsity principles from instance classification to yield-anomaly
+attribution. Climate-attribution studies compare observed outcomes against a
+counterfactual without climate trends \citep{Lobell2011ClimateTrends}; SCAA applies an
+analogous logic at the level of individual crop-region-year anomalies, while
+emphasizing that attributions are model-internal and not causal.
+
+\section{Data}
+\label{sec:data}
+The unit of analysis is a crop-region-year; the target is yield in t/ha. We study the
+overlap winter and spring crops Barley, Canola, Oats and Wheat across twelve U.S.\
+states (Colorado, Illinois, Iowa, Kansas, Minnesota, Montana, Nebraska, North Dakota,
+Oklahoma, South Dakota, Texas, Washington). Yields are from USDA NASS Quick Stats,
+converted from bushels (or pounds, for canola) per acre to t/ha with crop-specific
+test weights. Daily weather (maximum and minimum temperature, corrected precipitation,
+all-sky surface radiation) is from NASA POWER, used uniformly for all states so that no
+cross-source measurement difference confounds the analysis. The merged frame contains
+1{,}257 crop-region-year observations spanning 1990--2025.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Hemisphere-correct growing-season features}
+\label{sec:fe}
+Daily records are aggregated into interpretable growing-season indicators
+(Figure~\ref{fig:design}): seasonal rainfall totals and means, dry-day counts and
+maximum dry-spell length, long dry-spell event counts, heavy-rain day counts and
+rolling 1/3/7-day maxima, heat-day counts and consecutive-heat runs, heatwave events,
+heat- and growing-degree days, hot-dry days, frost and cold days, frost events,
+radiation summaries, and early/mid/late thirds of the window. Crucially, the
+aggregation window is crop- and latitude-specific rather than a single fixed window:
+U.S.\ winter wheat (southern and Pacific-Northwest states) is aggregated over
+September--June, while spring crops (barley, oats, canola, and northern-plains spring
+wheat) are aggregated over April--September. This phenology-correct windowing captures
+the over-wintering period of winter wheat (e.g.\ the establishment-stage frost
+exposure) that a fixed warm-season window omits.
+
+\subsection{Detrending and anomaly definition}
+\label{sec:detrend}
+Long-run yield change is dominated by technological and managerial trend rather than by
+weather, so we separate the two before attribution. For each crop-region series we fit
+an ordinary-least-squares trend $\hat y_{c,r}(t)=\beta_0+\beta_1 t$ and form the
+residual $e_{c,r,t}=y_{c,r,t}-\hat y_{c,r}(t)$, standardized within series to
+$z_{c,r,t}=e_{c,r,t}/\sigma_{e}$. A crop-region-year is a \emph{low-yield anomaly} if
+$z_{c,r,t}<-1$. This removes the trend that would otherwise dominate any attribution and
+isolates the weather-driven shortfall.
+
+\subsection{Yield model}
+\label{sec:model}
+An Extremely Randomized Trees regressor (400 trees, minimum leaf size 2) maps the
+growing-season features, the year index, location and crop/region identifiers to yield.
+Numeric features are median-imputed and standardized; categorical features are one-hot
+encoded. The model is fit under a forward-time protocol (train $\le2015$, test
+$\ge2016$).
+
+\subsection{Sparse counterfactual anomaly attribution (SCAA)}
+\label{sec:scaa}
+Let $\hat f$ be the yield model and, for an anomaly $(c,r,t)$, let
+$\tau=\hat y_{c,r}(t)$ be the trend-expected ``normal'' yield. With $\mathbf w$ the
+observed weather vector, SCAA seeks the minimal feasible weather change that raises the
+predicted yield toward $\tau$:
+\begin{equation}
+\bm\delta^\star=\arg\min_{\bm\delta}\;\|\bm\delta\oslash\bm\sigma_r\|_1
+\quad\text{s.t.}\quad \hat f(\mathbf w+\bm\delta)\ \uparrow\ \tau,\;\;
+\mathbf w+\bm\delta\in\mathcal W_r,
+\end{equation}
+where $\bm\sigma_r$ is the per-feature regional standard deviation and $\mathcal W_r$
+the region's observed feasible box (preventing out-of-distribution counterfactuals).
+Because $\hat f$ is a tree ensemble, we solve by greedy coordinate search over
+interpretable indicators with a sparsity budget. Rather than a binary repaired/not, we
+report the continuous \emph{weather-recoverable fraction}
+\begin{equation}
+\phi_{c,r,t}=\frac{\hat f(\mathbf w+\bm\delta^\star)-\hat f(\mathbf w)}{\tau-\hat f(\mathbf w)},
+\end{equation}
+the share of the modelled yield gap that feasible weather change can recover, and the
+\emph{dominant driver}, the indicator with the largest standardized change in
+$\bm\delta^\star$. An anomaly is \emph{weather-driven} if $\phi\ge0.5$; a low $\phi$
+flags an anomaly that weather alone cannot explain. All attributions are post-hoc and do
+not influence model fitting.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Predictive performance}
+\label{sec:perf}
+On harmonized data with phenology-correct windows the yield model attains a test $R^2$
+of 0.809 (RMSE 0.525 t/ha) over 2016--2021, and 0.808 (RMSE 0.536) over an extended
+2019--2025 horizon, confirming stable forward-time skill into recent years
+(Figure~\ref{fig:scatter}). Predictability is markedly regime-dependent: spring crops
+reach $R^2=0.842$ while winter wheat, despite its correct September--June window,
+remains harder at $R^2=0.543$, reflecting the larger weather-driven variance of
+semi-arid winter-wheat regions.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\linewidth]{figures/fig02_daily_extreme_feature_design.png}
+\caption{From daily weather to interpretable growing-season indicators. Daily records are
+aggregated over crop- and latitude-specific windows into extreme-weather features used
+for prediction and anomaly attribution.}
+\label{fig:design}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\linewidth]{figures/figUS_scatter.png}
+\caption{Observed versus predicted yield, forward-time test 2016--2025. Calibration is
+close to the identity line across crops.}
+\label{fig:scatter}
+\end{figure}
+
+\subsection{Anomaly detection}
+\label{sec:anom}
+After detrending, 215 of 1{,}227 crop-region-years (17.5\%) are flagged as low-yield
+anomalies ($z<-1$). Their temporal distribution (Figure~\ref{fig:timeline}) concentrates
+in documented U.S.\ drought years: anomaly counts peak in 2002, 2011, 2021 and 2022, with
+2012 also prominent---each a recognized drought or heat year on the Plains. This temporal
+alignment is independent corroboration that the detrended anomalies capture genuine
+weather-driven failures rather than statistical noise.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/figH_anomaly_timeline.png}
+\caption{Low-yield anomalies per year; major drought years (2012, 2021, 2022) highlighted.
+Anomaly frequency tracks documented drought episodes.}
+\label{fig:timeline}
+\end{figure}
+
+\subsection{Counterfactual attribution}
+\label{sec:attr}
+SCAA assigns each anomaly a weather-recoverable fraction and a dominant driver
+(Figure~\ref{fig:scaa}). The median recoverable fraction is 0.86, and 89\% of anomalies
+are weather-driven ($\phi\ge0.5$); the remaining 11\% have low $\phi$ and are flagged as
+not weather-explainable, a useful pointer to non-meteorological causes (pests,
+management, market-driven abandonment, or moisture excess beyond the model's sensitivity).
+The dominant drivers form an agronomically coherent set (Table~\ref{tab:drivers}): long
+dry-spell events and frost events lead, followed by seasonal rainfall deficits, heat-day
+exposure, excess-wet days and radiation, reflecting that U.S.\ crop failures arise from
+both drought/heat and, less often, cold and excess-moisture extremes.
+
+\begin{table}[h]
+\centering
+\caption{Most frequent dominant weather driver across weather-driven anomalies.}
+\label{tab:drivers}
+\small
+\begin{tabular}{lr}
+\toprule
+Dominant driver & \# anomalies \\
+\midrule
+Long dry-spell events ($\ge$14 days) & 23 \\
+Frost events ($\ge$2 consecutive days) & 18 \\
+Seasonal rainfall (deficit) & 16 \\
+Heat days ($T_{\max}\ge30^\circ$C) & 15 \\
+Wet days (excess) & 12 \\
+Seasonal radiation & 11 \\
+Mean maximum temperature & 9 \\
+Heatwave events (3-day, $30^\circ$C) & 9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/figG_us_methodA.png}
+\caption{SCAA outputs. Left: distribution of the weather-recoverable fraction; 89\% of
+anomalies exceed the 0.5 weather-driven threshold (median 0.86). Right: frequency of the
+dominant weather driver across attributed anomalies.}
+\label{fig:scaa}
+\end{figure}
+
+\subsection{Event validation}
+\label{sec:valid}
+The attributions agree with known events. In the 2012 Plains drought, the Kansas Oats
+anomaly is attributed to growing-degree-day and heat extremes (recoverable fraction
+0.93), North Dakota Canola to consecutive heat days (0.86), and South Dakota Barley to
+heatwave events (0.60)---all heat-driven, consistent with the 2012 heat-drought. The most
+severe recent anomalies, in 2021--2022, are attributed predominantly to dry-spell and
+dry-day extremes (e.g.\ Oklahoma Oats 2022 and South Dakota Barley 2021), matching the
+2021 Northern-Plains/Pacific-Northwest drought and the 2022 droughts. A minority of 2021
+North Dakota anomalies have low recoverable fraction with excess-moisture drivers,
+correctly flagged by SCAA as not cleanly weather-explainable.
+
+\section{Discussion}
+\label{sec:discussion}
+SCAA converts a competitive but opaque yield model into an interpretable, event-level
+tool. The two-stage design---detrend, then attribute the residual anomaly---matters: long-run
+yield change is trend-dominated, so attributing raw change to weather would be
+misleading, echoing cautions in explainable yield modelling \citep{Hu2023ExplainableYield}
+and climate-trend attribution \citep{Lobell2011ClimateTrends}. The continuous
+weather-recoverable fraction is more honest than a binary explanation: it quantifies how
+much of each failure weather can account for and, by flagging low-$\phi$ anomalies,
+distinguishes weather failures from those requiring non-weather explanations. Validation
+against 2012 and 2021--2022 shows the attributions recover the correct physical driver for
+documented events.
+
+\section{Limitations and Future Work}
+\label{sec:limits}
+Attributions are model-internal predictive associations, not causal effects, and depend
+on the model's weather sensitivity; the greedy counterfactual margin is a conservative
+lower bound. State-level aggregation cannot resolve within-state management, irrigation,
+cultivar or soil variation. Linear detrending may under- or over-fit non-linear technology
+curves for some series. Future work should add irrigation and management covariates,
+finer spatial resolution, bootstrap intervals on the recoverable fraction, and a synthetic
+benchmark with known weather/trend contributions to validate the attribution itself.
+
+\section{Conclusion}
+\label{sec:conclusion}
+We presented SCAA, a sparse-counterfactual method that detects low-yield anomalies and
+attributes each to its dominant extreme-weather driver with a weather-recoverable
+fraction. On twelve U.S.\ states and four crops (1990--2025), a forward-time model reaches
+$R^2=0.81$, anomalies align with documented droughts, 89\% of anomalies are weather-driven,
+and event-level attributions recover the correct drivers for the 2012 and 2021--2022
+events while honestly flagging the cases weather cannot explain. SCAA makes
+extreme-weather yield interpretation operational at the level of the individual events
+that matter most for risk.
+
+\small
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

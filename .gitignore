@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary notebooks and scratch work
+.ipynb_checkpoints/
+scratch/
+
+# Keep the packaged prototype data by default.
+# Uncomment these lines before committing if the remote should not store data.
+# data/raw/*.zip
+# data/raw/*.csv
+# data/processed/*.csv
