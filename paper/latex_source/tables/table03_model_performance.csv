@@ -1,0 +1,6 @@
+evaluation,test_years,n_test,r2,rmse_t_ha
+test_2016_2021,2016-2021,209,0.809,0.525
+test_2019_2025,2019-2025,236,0.808,0.536
+window_spring_2016_2021,2016-2021,164,0.842,0.475
+window_winter_2016_2021,2016-2021,45,0.543,0.677
+low_yield_anomalies,1990-2025,1257,,214 anomalies

@@ -1,0 +1,8 @@
+paper_section,use,bib_keys
+Introduction,Extreme weather and crop-yield losses,Lesk2016; Zampieri2017; Vogel2019; Ray2015
+Related work,Machine-learning crop-yield prediction,Paudel2021; Meroni2021; Khaki2019; LengHall2020
+Related work,Yield anomalies and detrending,Lu2017; Ray2015; Meng2024; Sjulgard2023
+Related work,Interpretable ML for yield models,LundbergLee2017; Ribeiro2016; Mohan2025
+Method,Sparse and feasible counterfactual explanation,Wachter2018; Mothilal2020; Ustun2019; Poyiadzi2020; Verma2024
+Method and limitations,Event-attribution language and pitfalls,Hannart2016; Otto2017; Oldenborgh2021; OrtizBobea2021
+Extension,Early warning and conformal uncertainty,Anderson2024; Meroni2021; Singh2024; Farag2025

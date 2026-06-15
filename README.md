@@ -82,6 +82,29 @@ remains the top sparse/grouped method. Use `03_observed_analog_counterfactual` a
 robustness evidence because it replaces the full weather vector with a real
 normal season.
 
+## Paper Package
+
+Build the paper figures, tables, data manifest, and Overleaf archive:
+
+```powershell
+python scripts/build_paper_assets.py
+python scripts/package_overleaf.py
+```
+
+Paper files are written to:
+
+- `paper/latex_source/main.tex`
+- `paper/latex_source/references.bib`
+- `paper/latex_source/figures/`
+- `paper/latex_source/tables/`
+- `paper/overleaf_zip/scaa_crop_yield_anomaly_attribution.zip`
+- `paper/DATA_MANIFEST.md`
+- `paper/REPRODUCIBILITY.md`
+
+Upload the Overleaf zip and compile `main.tex`. Reference metadata is derived from
+`paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; verify
+recent, preprint, and 2025-2026 entries before formal submission.
+
 ## Git Push Setup
 
 This folder is intended to be its own repository.

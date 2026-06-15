@@ -1,0 +1,13 @@
+method,year,n_events,expected_match_rate,median_recoverable
+00_baseline_v1_raw_yield_scaa,2012,3,1.0,0.379
+00_baseline_v1_raw_yield_scaa,2021,19,0.842,0.27
+00_baseline_v1_raw_yield_scaa,2022,13,0.769,0.427
+01_residual_target_scaa,2012,3,0.667,0.465
+01_residual_target_scaa,2021,19,0.368,0.495
+01_residual_target_scaa,2022,13,1.0,0.52
+02_grouped_driver_scaa,2012,3,1.0,0.521
+02_grouped_driver_scaa,2021,19,0.842,0.686
+02_grouped_driver_scaa,2022,13,0.923,0.532
+03_observed_analog_counterfactual,2012,3,0.667,0.584
+03_observed_analog_counterfactual,2021,19,1.0,0.905
+03_observed_analog_counterfactual,2022,13,1.0,0.922

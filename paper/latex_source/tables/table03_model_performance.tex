@@ -1,0 +1,18 @@
+\begin{table}[H]
+\centering
+\caption{Forward-time yield performance and anomaly count.}
+\label{tab:model_performance}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllll}
+\toprule
+evaluation & test\_years & n\_test & r2 & rmse\_t\_ha \\
+\midrule
+test\_2016\_2021 & 2016-2021 & 209 & 0.809 & 0.525 \\
+test\_2019\_2025 & 2019-2025 & 236 & 0.808 & 0.536 \\
+window\_spring\_2016\_2021 & 2016-2021 & 164 & 0.842 & 0.475 \\
+window\_winter\_2016\_2021 & 2016-2021 & 45 & 0.543 & 0.677 \\
+low\_yield\_anomalies & 1990-2025 & 1257 &  & 214 anomalies \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

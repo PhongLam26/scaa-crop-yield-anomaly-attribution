@@ -1,0 +1,297 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\graphicspath{{figures/}}
+
+\title{\textbf{Sparse Counterfactual Attribution of Crop-Yield Anomalies\\to Extreme-Weather Drivers}}
+\author{Tran Dai Phong Lam\\FPT University}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Machine-learning studies of crop yield usually optimize average predictive accuracy, but
+agricultural risk management often needs a different answer: why did a particular
+crop-state-year fall abnormally below its expected yield? We present Sparse
+Counterfactual Anomaly Attribution (SCAA), a model-based framework that detects
+detrended low-yield anomalies and attributes each event to sparse, physically grouped
+extreme-weather drivers. Daily NASA POWER weather and USDA yield records are aggregated
+for four crops, twelve U.S. states, and 1990--2025. A forward-time ExtraTrees yield
+model reproduces strong predictive skill, with $R^2=0.809$ for 2016--2021 and
+$R^2=0.808$ for 2019--2025. After crop-state detrending, 214 of 1,257 observations are
+flagged as low-yield anomalies. The main grouped-SCAA attribution method explains
+anomalies with heat, drought/dry-spell, frost/cold, excess-rain, and radiation driver
+groups. It attains a median recoverable fraction of 0.589, classifies 73.4\% of
+anomalies as weather-driven, and matches expected heat/drought/moisture groups in
+88.6\% of event-year checks for 2012, 2021, and 2022. Observed-analog counterfactuals
+provide a robustness check, and crop-specific vulnerability profiles identify which
+drivers lower which crops in the fitted residual model. The results are predictive,
+model-internal counterfactual explanations, not causal effects.
+\end{abstract}
+
+\noindent\textbf{Keywords:} crop yield; extreme weather; counterfactual explanation; yield anomaly; interpretable machine learning; drought; heat stress.
+
+\section{Introduction}
+Extreme weather can produce large agricultural losses, with drought, heat, excess
+water, and cold events affecting crop production at regional and global scales
+\citep{Lesk2016,Zampieri2017,Vogel2019}. Standard crop-yield machine-learning
+workflows demonstrate that weather and climate variables can support accurate yield
+forecasting \citep{Paudel2021,Meroni2021,Khaki2019,LengHall2020}, but prediction alone
+does not answer the event-level question needed for risk interpretation: which weather
+driver does the model identify as the strongest contributor for a specific low-yield
+crop-state-year?
+
+This paper reframes yield interpretation as anomaly attribution. We first separate
+long-run crop-state yield trend from short-run yield variation, following the logic of
+detrended yield residual analysis \citep{Ray2015,Lu2017,Meng2024}. We then detect
+low-yield anomalies and ask a counterfactual question: what sparse, feasible change to
+the weather features would move the predicted detrended residual back toward a normal
+season? Unlike feature-importance methods such as SHAP or LIME
+\citep{LundbergLee2017,Ribeiro2016}, this produces a recovery quantity in
+t ha$^{-1}$ and a crop-specific event claim.
+
+The contribution is not a new yield predictor. The contribution is a reproducible
+event-level attribution workflow that combines detrended yield anomalies, physically
+grouped extreme-weather drivers, and feasible sparse counterfactual explanations.
+Figure~\ref{fig:workflow} summarizes the pipeline.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig01_method_workflow.png}
+  \caption{SCAA workflow. Daily weather and yield records are converted into
+  crop-state-year features, detrended anomalies, residual weather models, and grouped
+  counterfactual attribution claims.}
+  \label{fig:workflow}
+\end{figure}
+
+\section{Related Work}
+\subsection{Crop-Yield Prediction and Weather Features}
+Large-scale crop-yield forecasting has been studied with random forests, neural
+networks, and other statistical or machine-learning approaches
+\citep{Paudel2021,Khaki2019,Shahhosseini2021}. In-season forecasting under small-data
+conditions is also active, especially for grain systems \citep{Meroni2021}. These
+studies support the predictive modeling layer of our work, but they mainly optimize
+forecasting skill rather than event-level explanation.
+
+\subsection{Extreme-Weather Yield Anomalies}
+Prior work links yield anomalies to climate extremes, including heatwaves, drought,
+water excess, hot-dry compound events, and crop-specific weather relationships
+\citep{Zampieri2017,Vogel2019,Heino2023,Sjulgard2023}. Stage-specific weather effects
+are also important because temperature, rainfall, frost, and radiation can matter
+differently during crop development \citep{Schierhorn2021}. These studies motivate our
+driver groups: heat, drought/dry-spell, frost/cold, excess rainfall, and radiation.
+
+\subsection{Counterfactual and Event Attribution}
+Counterfactual explanations ask for minimal changes that would alter a model outcome
+\citep{Wachter2018}. Diverse and feasible counterfactual methods emphasize proximity,
+sparsity, plausibility, and actionable constraints
+\citep{Mothilal2020,Ustun2019,Poyiadzi2020,Verma2024}. Climate-event attribution also
+uses counterfactual language, but it requires careful event definition, causal
+assumptions, and model validation \citep{Hannart2016,Otto2017,Oldenborgh2021}. We use
+the counterfactual form for model-based explanation, while explicitly avoiding strong
+causal claims.
+
+\section{Data}
+The empirical unit is a crop-state-year. The processed frame contains 1,257
+observations for Barley, Canola, Oats, and Wheat across twelve U.S. states from
+1990--2025. Yields are in t ha$^{-1}$. Weather features are derived from NASA POWER
+daily records and include rainfall totals, dry spells, heavy-rain events, heat days,
+heatwaves, growing-degree days, frost/cold metrics, and radiation summaries. Growing
+season windows are crop- and state-aware, with spring and winter windows represented
+in the processed frame.
+
+\input{tables/table01_dataset_summary.tex}
+\input{tables/table02_driver_groups.tex}
+
+Figure~\ref{fig:data_coverage} shows crop coverage and crop-state density.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig02_data_coverage.png}
+  \caption{Data coverage by crop and state.}
+  \label{fig:data_coverage}
+\end{figure}
+
+\section{Method}
+\subsection{Yield Skill Baseline}
+We retain a forward-time yield model to verify that the weather and crop-state features
+contain predictive signal. Numeric variables are median-imputed and standardized;
+categorical crop and state identifiers are one-hot encoded. An ExtraTrees regressor is
+trained under two forward-time splits: train through 2015 and test 2016--2021; then
+train through 2018 and test 2019--2025.
+
+\subsection{Detrending and Anomaly Detection}
+For each crop-state series, a linear trend is fit to yield:
+\begin{equation}
+  y_{c,s,t} = \alpha_{c,s} + \beta_{c,s} t + \epsilon_{c,s,t}.
+\end{equation}
+The residual is standardized within each crop-state series. A low-yield anomaly is an
+observation with standardized residual below $-1$. This step follows the literature on
+separating long-run technology and management trend from weather-sensitive yield
+variation \citep{Ray2015,Lu2017,Meng2024}.
+
+\subsection{Grouped Sparse Counterfactual Attribution}
+The main paper method is grouped-SCAA. A residual model maps weather and crop-state
+features to detrended yield residual. For each low-yield anomaly, grouped-SCAA moves a
+single physical driver group toward the observed feasible median for the same
+region-window group and evaluates how much of the negative residual is recovered.
+For anomaly $i$, the recoverable fraction is:
+\begin{equation}
+  \phi_i =
+  \frac{\min(\hat r_i^{cf} - \hat r_i, \Delta_i)}
+       {\Delta_i},
+  \quad
+  \Delta_i = \max(0, y^{trend}_i - y_i),
+\end{equation}
+where $\hat r_i$ and $\hat r_i^{cf}$ are the residual-model predictions before and
+after the grouped counterfactual edit. A crop-state-year is labelled weather-driven
+when $\phi_i \geq 0.5$.
+
+\subsection{Robustness and Extensions}
+Observed-analog counterfactuals replace the anomaly weather vector with real normal
+seasons from the same crop-state, or the same region-window fallback. This checks
+whether high recovery is possible under historically observed weather states.
+Crop-specific vulnerability profiles stress-test each crop under adverse observed
+driver extremes. An early-warning extension trains anomaly classifiers from early and
+early-plus-mid season weather features, with calibration-derived uncertainty bands
+\citep{Anderson2024,Singh2024,Farag2025}.
+
+\section{Results}
+\subsection{Yield Skill and Anomalies}
+The yield model reproduces strong forward-time predictive skill
+(Table~\ref{tab:model_performance}; Figure~\ref{fig:yield_prediction}). The 2016--2021
+split attains $R^2=0.809$ and RMSE 0.525 t ha$^{-1}$; the 2019--2025 split attains
+$R^2=0.808$ and RMSE 0.536 t ha$^{-1}$. After detrending, 214 of 1,257 observations are
+flagged as low-yield anomalies. The anomaly timeline peaks in known drought or heat
+years, including 2002, 2021, and 2022 (Figure~\ref{fig:anomaly_timeline}).
+
+\input{tables/table03_model_performance.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.68\linewidth]{fig03_yield_prediction.png}
+  \caption{Observed versus predicted yield under the forward-time 2016--2021 test.}
+  \label{fig:yield_prediction}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig04_anomaly_timeline.png}
+  \caption{Low-yield anomaly counts by year, with 2012, 2021, and 2022 highlighted.}
+  \label{fig:anomaly_timeline}
+\end{figure}
+
+\subsection{Method Comparison}
+Table~\ref{tab:method_scorecard} and Figure~\ref{fig:scorecard} compare V1 raw-yield
+SCAA, residual-target SCAA, grouped-driver SCAA, observed-analog counterfactuals, crop
+vulnerability profiles, and early-warning models. Observed analogs score highest
+numerically because they replace the full weather vector with a real normal season; we
+therefore use them as robustness evidence rather than the main sparse attribution
+method. The main grouped-SCAA method reaches median recoverable fraction 0.589,
+weather-driven rate 73.4\%, and event-year expected-driver match 88.6\%.
+
+\input{tables/table04_method_scorecard.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig05_method_scorecard.png}
+  \caption{Composite scorecard for alternative attribution and warning methods.}
+  \label{fig:scorecard}
+\end{figure}
+
+\subsection{Grouped Counterfactual Attribution}
+Grouped-SCAA produces a recovery fraction and driver group for each anomaly
+(Figure~\ref{fig:grouped}). The top crop-specific event claims are shown in
+Table~\ref{tab:top_claims}. For example, North Dakota Canola in 2021 is attributed to
+drought/dry-spell stress, with a modelled recovery of 0.522 t ha$^{-1}$, while
+Minnesota Canola in 2021 is attributed to heat exposure, with a modelled recovery of
+0.372 t ha$^{-1}$. These claims are model-based counterfactual recoveries, not direct
+causal estimates.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig06_grouped_driver_attribution.png}
+  \caption{Grouped-SCAA recoverable fraction and dominant driver-group frequency.}
+  \label{fig:grouped}
+\end{figure}
+
+\input{tables/table05_top_event_claims.tex}
+
+\subsection{Event Validation and Robustness}
+Event validation focuses on 2012, 2021, and 2022, where heat, drought, and moisture
+stress are plausible driver groups from the agronomic and climate-event literature.
+Grouped-SCAA matches expected heat/drought/moisture groups in 88.6\% of event-year
+attributions, while observed analogs match 97.1\% (Table~\ref{tab:event_validation};
+Figure~\ref{fig:event_validation}).
+
+\input{tables/table06_event_validation.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\linewidth]{fig08_event_validation.png}
+  \caption{Event-year agreement with expected heat/drought/moisture driver groups.}
+  \label{fig:event_validation}
+\end{figure}
+
+\subsection{Crop-Specific Vulnerability and Early Warning}
+The vulnerability profile answers which weather driver most reduces which crop in the
+fitted residual model. Barley is most sensitive to heat exposure, with median residual
+effect $-0.134$ t ha$^{-1}$ under adverse observed extremes; Wheat is most sensitive to
+drought/dry-spell stress, with median effect $-0.103$ t ha$^{-1}$; and Canola is most
+sensitive to heat exposure, with median effect $-0.086$ t ha$^{-1}$.
+
+\input{tables/table07_crop_vulnerability.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig07_crop_driver_vulnerability.png}
+  \caption{Crop-specific vulnerability profiles under adverse observed driver-group extremes.}
+  \label{fig:vulnerability}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig09_early_warning.png}
+  \caption{Early-warning extension comparing early-season and early-plus-mid-season anomaly risk models.}
+  \label{fig:warning}
+\end{figure}
+
+\section{Discussion}
+The results show that the best research framing is not average yield prediction, but
+event-level attribution of detrended low-yield anomalies. Grouped-SCAA improves over
+the raw-yield baseline by aligning the model target with the anomaly definition and by
+reporting physically interpretable driver groups. Observed analogs provide an important
+plausibility check because they use weather seasons that actually occurred.
+
+There are several limitations. The counterfactuals are model-internal predictive
+associations; they are not causal effects in the sense of formal climate-event
+attribution \citep{Hannart2016,Oldenborgh2021}. State-level aggregation hides
+within-state variation in irrigation, soil, cultivar, and management. Linear detrending
+is transparent, but alternative detrending choices may change anomaly membership
+\citep{Meng2024}. Finally, the early-warning extension uses realized early-season
+weather, not operational seasonal forecasts.
+
+\section{Conclusion}
+SCAA detects detrended low-yield anomalies and attributes them to sparse, physically
+grouped weather counterfactuals. On U.S. Barley, Canola, Oats, and Wheat across
+1990--2025, grouped-SCAA identifies crop-state-year claims such as heat exposure in
+Canola or drought/dry-spell stress in Wheat, with explicit recovered t ha$^{-1}$ and
+recoverable fractions. This provides a paper-ready contribution between crop-yield
+prediction, interpretable machine learning, and cautious event-level weather
+attribution.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

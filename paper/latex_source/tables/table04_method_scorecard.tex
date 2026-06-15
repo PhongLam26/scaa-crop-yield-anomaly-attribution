@@ -1,0 +1,19 @@
+\begin{table}[H]
+\centering
+\caption{Method comparison scorecard.}
+\label{tab:method_scorecard}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllll}
+\toprule
+method & total\_score & median\_recoverable\_fraction & weather\_driven\_rate & event\_expected\_match\_rate \\
+\midrule
+00\_baseline\_v1\_raw\_yield\_scaa & 6.498 & 0.379 & 0.262 & 0.829 \\
+01\_residual\_target\_scaa & 7.511 & 0.482 & 0.472 & 0.629 \\
+02\_grouped\_driver\_scaa & 8.745 & 0.589 & 0.734 & 0.886 \\
+03\_observed\_analog\_counterfactual & 9.018 & 0.853 & 0.972 & 0.971 \\
+04\_crop\_specific\_vulnerability\_profiles & 5.284 &  &  &  \\
+05\_early\_mid\_warning\_improved & 4.753 &  &  &  \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
