@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from pathlib import Path
 
 import matplotlib
@@ -112,7 +111,6 @@ def ensure_dirs() -> None:
     TABLES.mkdir(parents=True, exist_ok=True)
     SUPPLEMENT.mkdir(parents=True, exist_ok=True)
     TABLE_CSV.mkdir(parents=True, exist_ok=True)
-    (PAPER / "reference_pack").mkdir(parents=True, exist_ok=True)
     (PAPER / "overleaf_zip").mkdir(parents=True, exist_ok=True)
     for stale in list(TABLES.glob("table*.tex")) + list(SUPPLEMENT.glob("tableS*.tex")):
         stale.unlink()
@@ -859,19 +857,9 @@ def write_manifest(data: dict[str, pd.DataFrame]) -> None:
         ROOT / "data" / "raw" / "nasa_power_daily.zip",
         ROOT / "data" / "processed" / "us_model_frame_hemisphere_aware_1990_2025.csv",
         ROOT / "outputs" / "yield_model_metrics.csv",
-        ROOT / "improve_target" / "method_scorecard.csv",
-        ROOT / "improve_target" / "crop_driver_claims.csv",
-        ROOT
-        / "improve_target"
-        / "06_grouped_driver_scaa_temporal_holdout"
-        / "outputs"
-        / "temporal_holdout_attributions.csv",
-        ROOT
-        / "improve_target"
-        / "06_grouped_driver_scaa_temporal_holdout"
-        / "outputs"
-        / "residual_model_validation.csv",
-        ROOT / "improve_target" / "event_consistency_null_baselines.csv",
+        ROOT / "outputs" / "low_yield_anomalies.csv",
+        ROOT / "paper" / "DAP_new.pdf",
+        ROOT / "paper" / "overleaf_zip" / "scaa_crop_yield_anomaly_attribution.zip",
     ]
     lines = [
         "# Data Manifest",
@@ -918,42 +906,9 @@ def write_reproducibility() -> None:
         "",
         "Local TeX compilation is optional. If a TeX distribution is unavailable, upload the Overleaf zip and compile there.",
         "",
-        "Reference metadata was extracted from `paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; preprint and future-year entries are tracked in `paper/REFERENCE_AUDIT.md` rather than in submit-ready BibTeX notes.",
+        "Generated experiment workspaces such as `improve_target/` are intentionally omitted from the public branch and can be recreated with `python scripts/run_improvement_experiments.py`.",
     ]
     (PAPER / "REPRODUCIBILITY.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def copy_reference_pack() -> None:
-    src = ROOT.parent / "crop_yield_anomaly_attribution_references.docx"
-    dst = PAPER / "reference_pack" / "crop_yield_anomaly_attribution_references.docx"
-    if src.exists():
-        shutil.copy2(src, dst)
-
-
-def write_reference_audit() -> None:
-    lines = [
-        "# Reference Audit",
-        "",
-        "The BibTeX file is derived from `paper/reference_pack/crop_yield_anomaly_attribution_references.docx`.",
-        "",
-        "## Core References Used In The Draft",
-        "",
-        "- Detrending and yield variability: Ray2015, Lu2017, Meng2024.",
-        "- Data sources: NASAPOWER2025, USDANASSQuickStats.",
-        "- Extreme-weather yield loss: Lesk2016, Zampieri2017, Vogel2019, Heino2023, Sjulgard2023.",
-        "- Yield prediction baselines: Paudel2021, Meroni2021, Khaki2019, LengHall2020.",
-        "- Counterfactual explanation: Wachter2018, Mothilal2020, Ustun2019, Poyiadzi2020, Verma2024.",
-        "- Event-attribution caution: Hannart2016, Otto2017, Oldenborgh2021.",
-        "- External event-year evidence: NOAA2012Drought, DroughtGov2021NorthernPlains, NOAA2022Drought, NOAA2022AugustDrought.",
-        "- Early warning and uncertainty: Anderson2024, Singh2024, Farag2025.",
-        "",
-        "## Submission Caution",
-        "",
-        "The reference pack contains 2025-2026 and preprint entries. Keep them for drafting, but verify DOI, volume, issue, and final publication status before formal submission.",
-        "",
-        "The submit-facing `paper/latex_source/references.bib` intentionally does not contain internal verification notes.",
-    ]
-    (PAPER / "REFERENCE_AUDIT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_supplement_tex() -> None:
@@ -1079,14 +1034,12 @@ def assert_outputs() -> None:
 
 def main() -> None:
     ensure_dirs()
-    copy_reference_pack()
     data = read_inputs()
     validate_inputs(data)
     build_tables(data)
     build_figures(data)
     write_manifest(data)
     write_reproducibility()
-    write_reference_audit()
     write_supplement_tex()
     assert_outputs()
     print("Paper assets built.")

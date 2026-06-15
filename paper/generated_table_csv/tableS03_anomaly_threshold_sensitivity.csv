@@ -1,4 +1,0 @@
-threshold,anomaly_count,share_of_dataset,median_recoverable_fraction,top_driver_groups
-z < -1.0,214,0.17,0.116,"drought, heat, excess_rain"
-z < -1.5,85,0.068,0.121,"drought, heat, excess_rain"
-z < -2.0,30,0.024,0.119,"drought, heat, radiation"

@@ -1,4 +1,0 @@
-protocol,held_out_unit,n_eval,r2,rmse_t_ha,mae_t_ha
-Forward-time residual,2016-2025,343,0.093,0.431,0.326
-Leave-one-event-year-out residual,All held-out rows,1222,0.085,0.369,0.284
-Leave-one-event-year-out residual,Anomaly rows,214,-5.152,0.562,0.496

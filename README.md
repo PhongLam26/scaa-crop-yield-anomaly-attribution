@@ -1,11 +1,10 @@
 # SCAA US Weather-Yield Research Prototype
 
-This repository is a self-contained prototype for sparse counterfactual attribution
-of US crop-yield anomalies to extreme-weather drivers. It follows the advisor idea
-stored in `docs/reference/`: do not only predict yield, but first detrend each
-crop-region yield series, identify abnormal low-yield events, and then ask which
-minimal feasible weather change would move the model prediction back toward a
-normal year.
+This repository is a self-contained research artifact for sparse counterfactual
+attribution of US crop-yield anomalies to extreme-weather drivers. The workflow does
+not only predict yield: it detrends each crop-region yield series, identifies
+below-trend events, and asks which minimal feasible weather change would move the
+model prediction back toward a normal year.
 
 The prototype also includes a small early-warning baseline that uses only early
 season and early+mid season weather features to estimate the probability of a
@@ -19,8 +18,6 @@ low-yield year.
 - `data/raw/us_yield_1989_2025_tha.csv`: raw harmonized USDA NASS yield table.
 - `data/raw/nasa_power_daily.zip`: NASA POWER daily weather files for the twelve
   US states used in the prototype.
-- `docs/reference/`: original idea artifacts, including the LaTeX paper draft,
-  PDF, and advisor note image.
 
 ## Quick Start
 
@@ -37,7 +34,6 @@ The run writes reproducible outputs to:
   early-warning predictions.
 - `figures/`: PNG figures for the model, anomaly timeline, attribution drivers,
   recoverable fraction, and early-warning comparison.
-- `RESULTS_SUMMARY.md`: generated summary of the latest run.
 
 ## Main Workflow
 
@@ -60,7 +56,8 @@ After the V1 run, execute the experiment suite:
 python scripts/run_improvement_experiments.py
 ```
 
-This writes `improve_target/`, with one folder per method:
+This writes a local `improve_target/` folder, which is intentionally omitted from
+the public repository because it is a generated experiment workspace:
 
 - `00_baseline_v1_raw_yield_scaa`
 - `01_residual_target_scaa`
@@ -69,18 +66,8 @@ This writes `improve_target/`, with one folder per method:
 - `04_crop_specific_vulnerability_profiles`
 - `05_early_mid_warning_improved`
 
-The most important global files are:
-
-- `improve_target/COMPARISON_REPORT.md`
-- `improve_target/PAPER_CONTRIBUTION_DECISION.md`
-- `improve_target/method_scorecard.csv`
-- `improve_target/crop_driver_claims.csv`
-- `improve_target/event_validation_2012_2021_2022.csv`
-
-Use `02_grouped_driver_scaa` as the paper-friendly main attribution method if it
-remains the top sparse/grouped method. Use `03_observed_analog_counterfactual` as
-robustness evidence because it replaces the full weather vector with a real
-normal season.
+Run this step before rebuilding paper assets because the manuscript tables and figures
+use the regenerated comparison and attribution outputs.
 
 ## Paper Package
 
@@ -98,12 +85,12 @@ Paper files are written to:
 - `paper/latex_source/figures/`
 - `paper/latex_source/tables/`
 - `paper/overleaf_zip/scaa_crop_yield_anomaly_attribution.zip`
+- `paper/DAP_new.pdf`
 - `paper/DATA_MANIFEST.md`
 - `paper/REPRODUCIBILITY.md`
 
-Upload the Overleaf zip and compile `main.tex`. Reference metadata is derived from
-`paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; verify
-recent, preprint, and 2025-2026 entries before formal submission.
+Upload the Overleaf zip and compile `main.tex`, or open the compiled
+`paper/DAP_new.pdf`.
 
 ## Git Push Setup
 
@@ -115,8 +102,8 @@ git branch -M main
 git push -u origin main
 ```
 
-If the remote should not store packaged data, uncomment the data ignore lines in
-`.gitignore` before committing.
+Generated audit workspaces and internal review notes are ignored so the public branch
+stays focused on the paper, data, code, and reproducibility package.
 
 ## Interpretation
 

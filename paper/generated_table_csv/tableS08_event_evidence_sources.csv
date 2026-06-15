@@ -1,4 +1,0 @@
-year,expected_stress_group,affected_region_crop_scope,external_source,pre_specified
-2012,"heat, drought",Central United States and Plains crop belt; crop-state rows in the processed frame,NOAA/NCEI Annual 2012 Drought Report; NWS 2012 drought summary,yes
-2021,"heat, drought",Northern Plains and Canadian Prairie drought context; U.S. crop-state rows in the processed frame,Drought.gov/NIDIS report on the 2020-2021 Northern Plains and Canadian Prairies drought,yes
-2022,"heat, drought, excess_rain",U.S. drought and regional wetness episodes during the 2022 growing season,NOAA/NCEI Annual 2022 and August 2022 Drought Reports,yes

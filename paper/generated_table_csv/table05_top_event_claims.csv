@@ -1,6 +1,0 @@
-crop,region,year,driver_group,dominant_feature,yield_gap_t_ha,recovered_gap_t_ha,recoverable_fraction
-Oats,South Dakota,2006,drought,rain_mean,0.381,0.273,0.717
-Barley,Washington,2015,drought,hot_dry_days_30_1mm,0.862,0.598,0.693
-Wheat,Washington,1992,drought,max_dry_spell_1mm,0.579,0.39,0.672
-Wheat,Texas,2009,drought,dry_spell_events_14d,0.41,0.273,0.666
-Canola,North Dakota,2012,drought,hot_dry_days_30_1mm,0.285,0.183,0.64

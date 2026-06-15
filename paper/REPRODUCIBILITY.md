@@ -18,4 +18,4 @@ The generated paper files are stored in `paper/latex_source/`; the Overleaf uplo
 
 Local TeX compilation is optional. If a TeX distribution is unavailable, upload the Overleaf zip and compile there.
 
-Reference metadata was extracted from `paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; preprint and future-year entries are tracked in `paper/REFERENCE_AUDIT.md` rather than in submit-ready BibTeX notes.
+Generated experiment workspaces such as `improve_target/` are intentionally omitted from the public branch and can be recreated with `python scripts/run_improvement_experiments.py`.

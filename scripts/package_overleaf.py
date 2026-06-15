@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import zipfile
 from pathlib import Path
 
@@ -7,6 +8,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LATEX = ROOT / "paper" / "latex_source"
 ZIP_PATH = ROOT / "paper" / "overleaf_zip" / "scaa_crop_yield_anomaly_attribution.zip"
+MANIFEST = ROOT / "paper" / "DATA_MANIFEST.md"
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def update_manifest_zip_checksum() -> None:
+    if not MANIFEST.exists():
+        return
+    rel = r"paper\overleaf_zip\scaa_crop_yield_anomaly_attribution.zip"
+    size = ZIP_PATH.stat().st_size
+    digest = sha256_file(ZIP_PATH)
+    replacement = f"| `{rel}` | {size} | `{digest}` |"
+    lines = MANIFEST.read_text(encoding="utf-8").splitlines()
+    updated = [replacement if line.startswith(f"| `{rel}` |") else line for line in lines]
+    MANIFEST.write_text("\n".join(updated) + "\n", encoding="utf-8")
 
 
 def main() -> None:
@@ -52,6 +74,7 @@ def main() -> None:
         csv_files = [name for name in names if name.lower().endswith(".csv")]
         if csv_files:
             raise AssertionError(f"CSV files should not be included in Overleaf zip: {csv_files}")
+    update_manifest_zip_checksum()
     print(f"Overleaf package written: {ZIP_PATH}")
 
 

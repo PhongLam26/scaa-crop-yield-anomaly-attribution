@@ -19,6 +19,18 @@ Thumbs.db
 .ipynb_checkpoints/
 scratch/
 
+# Internal planning, review, and generated audit artifacts omitted from the public repo
+docs/reference/
+paper/reference_pack/
+paper/generated_table_csv/
+paper/REFERENCE_AUDIT.md
+paper/CHANGELOG_REVIEW_FIXES.md
+METHOD.md
+RESULTS_SUMMARY.md
+
+# Regenerable improvement experiment outputs
+improve_target/
+
 # Keep the packaged prototype data by default.
 # Uncomment these lines before committing if the remote should not store data.
 # data/raw/*.zip
