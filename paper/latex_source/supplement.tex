@@ -1,0 +1,50 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\graphicspath{{figures/}}
+
+\title{\textbf{Supplementary Material}\\Sparse Counterfactual Attribution of Crop-Yield Anomalies}
+\author{Tran Dai Phong Lam\\FPT University}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Driver Features and Robustness Tables}
+\input{supplement/tableS02_driver_group_features.tex}
+\input{supplement/tableS03_anomaly_threshold_sensitivity.tex}
+\input{supplement/tableS04_detrending_robustness.tex}
+\input{supplement/tableS05_observed_crop_state_pairs.tex}
+
+\section{Event-Year Consistency Details}
+\input{supplement/tableS08_event_evidence_sources.tex}
+\input{supplement/tableS06_event_consistency_summary.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\linewidth]{fig08_event_validation.png}
+  \caption{Event-year consistency with pre-specified heat, drought, and moisture stress groups.}
+  \label{fig:event_consistency_supp}
+\end{figure}
+
+\section{Early-Warning Extension}
+\input{supplement/tableS07_early_warning_metrics.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig09_early_warning.png}
+  \caption{Early-warning extension comparing early-season and early-plus-mid-season anomaly risk models.}
+  \label{fig:warning_supp}
+\end{figure}
+
+\section{Reference Mapping}
+\input{supplement/tableS01_reference_section_mapping.tex}
+
+\end{document}

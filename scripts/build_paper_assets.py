@@ -114,7 +114,9 @@ def ensure_dirs() -> None:
     TABLE_CSV.mkdir(parents=True, exist_ok=True)
     (PAPER / "reference_pack").mkdir(parents=True, exist_ok=True)
     (PAPER / "overleaf_zip").mkdir(parents=True, exist_ok=True)
-    for old_csv in TABLES.glob("*.csv"):
+    for stale in list(TABLES.glob("table*.tex")) + list(SUPPLEMENT.glob("tableS*.tex")):
+        stale.unlink()
+    for old_csv in list(TABLES.glob("*.csv")) + list(SUPPLEMENT.glob("*.csv")) + list(TABLE_CSV.glob("*.csv")):
         old_csv.unlink()
 
 
@@ -402,17 +404,28 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "tab:model_performance",
     )
 
-    residual_table = residual_validation[
-        ["model", "target", "protocol", "n_train", "n_test", "r2", "rmse_t_ha", "mae_t_ha"]
-    ].copy()
+    residual_table = residual_validation.copy()
     protocol_labels = {
-        "forward_time_train_1990_2015_test_2016_2025": "Forward-time 2016-2025",
-        "retrospective_leave_one_anomaly_year_out_all_rows": "Retrospective leave-one-year-out, all held-out rows",
-        "retrospective_leave_one_anomaly_year_out_anomaly_rows": "Retrospective leave-one-year-out, anomaly rows",
+        "forward_time_train_1990_2015_test_2016_2025": ("Forward-time residual", "2016-2025"),
+        "retrospective_leave_one_anomaly_year_out_all_rows": (
+            "Leave-one-event-year-out residual",
+            "All held-out rows",
+        ),
+        "retrospective_leave_one_anomaly_year_out_anomaly_rows": (
+            "Leave-one-event-year-out residual",
+            "Anomaly rows",
+        ),
     }
-    residual_table["protocol"] = residual_table["protocol"].map(protocol_labels).fillna(residual_table["protocol"])
+    residual_table["held_out_unit"] = residual_table["protocol"].map(
+        lambda key: protocol_labels.get(key, (key, ""))[1]
+    )
+    residual_table["protocol"] = residual_table["protocol"].map(
+        lambda key: protocol_labels.get(key, (key, ""))[0]
+    )
+    residual_table["n_eval"] = residual_table["n_test"].astype(int)
     for col in ["r2", "rmse_t_ha", "mae_t_ha"]:
         residual_table[col] = residual_table[col].map(lambda x: round(float(x), 3))
+    residual_table = residual_table[["protocol", "held_out_unit", "n_eval", "r2", "rmse_t_ha", "mae_t_ha"]]
     write_csv_and_tex(
         residual_table,
         TABLES / "table08_residual_model_validation.csv",
@@ -468,8 +481,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     event_source_table = pd.DataFrame(EVENT_EVIDENCE)
     write_csv_and_tex(
         event_source_table,
-        TABLES / "table06_event_evidence_sources.csv",
-        TABLES / "table06_event_evidence_sources.tex",
+        SUPPLEMENT / "tableS08_event_evidence_sources.csv",
+        SUPPLEMENT / "tableS08_event_evidence_sources.tex",
         "External evidence used to pre-specify expected event-year stress groups.",
         "tab:event_evidence_sources",
     )
@@ -489,15 +502,28 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         event_summary,
         SUPPLEMENT / "tableS06_event_consistency_summary.csv",
         SUPPLEMENT / "tableS06_event_consistency_summary.tex",
-        "Temporal-holdout event-year consistency summary for 2012, 2021, and 2022.",
+        "Leave-one-event-year-out event-year consistency summary for 2012, 2021, and 2022.",
         "tab:event_consistency_summary",
     )
 
     null_table = event_nulls.copy()
+    null_method_labels = {
+        "Most frequent driver (heat)": "Most frequent driver",
+        "Retrospective leave-one-event-year-out grouped SCAA": "Leave-one-year-out grouped SCAA",
+    }
+    null_interpretations = {
+        "Always drought": "Broad drought-label baseline.",
+        "Always heat": "Broad heat-label baseline.",
+        "Most frequent driver": "Majority-driver baseline.",
+        "Driver-frequency random": "Driver-frequency baseline.",
+        "Leave-one-year-out grouped SCAA": "Main diagnostic method.",
+    }
+    null_table["method"] = null_table["method"].map(lambda x: null_method_labels.get(x, x))
     null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: round(float(x), 3))
     null_table["median_recoverable_fraction"] = null_table["median_recoverable_fraction"].map(
-        lambda x: "" if pd.isna(x) or x == "" else round(float(x), 3)
+        lambda x: "--" if pd.isna(x) or x == "" else round(float(x), 3)
     )
+    null_table["interpretation"] = null_table["method"].map(null_interpretations).fillna(null_table["interpretation"])
     write_csv_and_tex(
         null_table,
         TABLES / "table09_event_null_baselines.csv",
@@ -913,6 +939,61 @@ def write_reference_audit() -> None:
     (PAPER / "REFERENCE_AUDIT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_supplement_tex() -> None:
+    content = r"""\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\graphicspath{{figures/}}
+
+\title{\textbf{Supplementary Material}\\Sparse Counterfactual Attribution of Crop-Yield Anomalies}
+\author{Tran Dai Phong Lam\\FPT University}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Driver Features and Robustness Tables}
+\input{supplement/tableS02_driver_group_features.tex}
+\input{supplement/tableS03_anomaly_threshold_sensitivity.tex}
+\input{supplement/tableS04_detrending_robustness.tex}
+\input{supplement/tableS05_observed_crop_state_pairs.tex}
+
+\section{Event-Year Consistency Details}
+\input{supplement/tableS08_event_evidence_sources.tex}
+\input{supplement/tableS06_event_consistency_summary.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\linewidth]{fig08_event_validation.png}
+  \caption{Event-year consistency with pre-specified heat, drought, and moisture stress groups.}
+  \label{fig:event_consistency_supp}
+\end{figure}
+
+\section{Early-Warning Extension}
+\input{supplement/tableS07_early_warning_metrics.tex}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{fig09_early_warning.png}
+  \caption{Early-warning extension comparing early-season and early-plus-mid-season anomaly risk models.}
+  \label{fig:warning_supp}
+\end{figure}
+
+\section{Reference Mapping}
+\input{supplement/tableS01_reference_section_mapping.tex}
+
+\end{document}
+"""
+    (LATEX / "supplement.tex").write_text(content, encoding="utf-8")
+
+
 def assert_outputs() -> None:
     expected_figures = [
         "fig01_method_workflow.png",
@@ -931,7 +1012,6 @@ def assert_outputs() -> None:
         "table03_model_performance.tex",
         "table04_method_scorecard.tex",
         "table05_top_event_claims.tex",
-        "table06_event_evidence_sources.tex",
         "table07_crop_vulnerability.tex",
         "table08_residual_model_validation.tex",
         "table09_event_null_baselines.tex",
@@ -944,10 +1024,13 @@ def assert_outputs() -> None:
         "tableS05_observed_crop_state_pairs.tex",
         "tableS06_event_consistency_summary.tex",
         "tableS07_early_warning_metrics.tex",
+        "tableS08_event_evidence_sources.tex",
     ]
     missing = [str(FIGURES / name) for name in expected_figures if not (FIGURES / name).exists()]
     missing += [str(TABLES / name) for name in expected_tables if not (TABLES / name).exists()]
     missing += [str(SUPPLEMENT / name) for name in expected_supplement if not (SUPPLEMENT / name).exists()]
+    if not (LATEX / "supplement.tex").exists():
+        missing.append(str(LATEX / "supplement.tex"))
     if missing:
         raise AssertionError(f"Missing paper assets: {missing}")
     for figure in expected_figures:
@@ -966,6 +1049,7 @@ def main() -> None:
     write_manifest(data)
     write_reproducibility()
     write_reference_audit()
+    write_supplement_tex()
     assert_outputs()
     print("Paper assets built.")
     print(f"Figures: {FIGURES}")

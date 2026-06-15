@@ -7,11 +7,11 @@
 \toprule
 method & expected\_match\_rate & median\_recoverable\_fraction & n\_event\_rows & interpretation \\
 \midrule
-Always drought & 1.0 &  & 35 & Trivial baseline; high values mean broad drought labels are easy to match. \\
-Always heat & 1.0 &  & 35 & Trivial baseline; high values mean broad heat labels are easy to match. \\
-Most frequent driver (heat) & 1.0 &  & 35 & Majority-driver baseline using the temporal-holdout SCAA event-year outputs. \\
-Driver-frequency random & 0.896 &  & 35 & Expected match if drivers are sampled from the temporal-holdout event-year frequency distribution. \\
-Retrospective leave-one-event-year-out grouped SCAA & 0.914 & 0.182 & 35 & Main diagnostic attribution method; evaluated against the same broad expected stress groups. \\
+Always drought & 1.0 & -- & 35 & Broad drought-label baseline. \\
+Always heat & 1.0 & -- & 35 & Broad heat-label baseline. \\
+Most frequent driver & 1.0 & -- & 35 & Majority-driver baseline. \\
+Driver-frequency random & 0.896 & -- & 35 & Driver-frequency baseline. \\
+Leave-one-year-out grouped SCAA & 0.914 & 0.182 & 35 & Main diagnostic method. \\
 \bottomrule
 \end{tabular}%
 }

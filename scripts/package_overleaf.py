@@ -12,6 +12,7 @@ ZIP_PATH = ROOT / "paper" / "overleaf_zip" / "scaa_crop_yield_anomaly_attributio
 def main() -> None:
     required = [
         LATEX / "main.tex",
+        LATEX / "supplement.tex",
         LATEX / "references.bib",
         LATEX / "figures",
         LATEX / "tables",
@@ -32,21 +33,25 @@ def main() -> None:
 
     ZIP_PATH.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as z:
-        for path in [LATEX / "main.tex", LATEX / "references.bib"]:
+        for path in [LATEX / "main.tex", LATEX / "supplement.tex", LATEX / "references.bib"]:
             z.write(path, path.relative_to(LATEX).as_posix())
         for path in figures + tables + supplement:
             z.write(path, path.relative_to(LATEX).as_posix())
         z.writestr(
             "README_OVERLEAF.txt",
-            "Upload this zip to Overleaf. Compile main.tex. "
+            "Upload this zip to Overleaf. Compile main.tex for the manuscript. "
+            "Compile supplement.tex separately if the venue allows supplementary material. "
             "Reference metadata should be verified before formal journal submission.\n",
         )
 
     with zipfile.ZipFile(ZIP_PATH) as z:
         names = set(z.namelist())
-        for needed in ["main.tex", "references.bib", "README_OVERLEAF.txt"]:
+        for needed in ["main.tex", "supplement.tex", "references.bib", "README_OVERLEAF.txt"]:
             if needed not in names:
                 raise AssertionError(f"Missing {needed} in zip")
+        csv_files = [name for name in names if name.lower().endswith(".csv")]
+        if csv_files:
+            raise AssertionError(f"CSV files should not be included in Overleaf zip: {csv_files}")
     print(f"Overleaf package written: {ZIP_PATH}")
 
 
