@@ -1,6 +1,6 @@
-method,expected_match_rate,median_recoverable_fraction,n_event_rows,interpretation
-Always drought,1.0,--,35,Broad drought-label baseline.
-Always heat,1.0,--,35,Broad heat-label baseline.
-Most frequent driver,1.0,--,35,Majority-driver baseline.
-Driver-frequency random,0.896,--,35,Driver-frequency baseline.
-Leave-one-year-out grouped SCAA,0.914,0.182,35,Main diagnostic method.
+Method,Expected match rate,Median recovery,n event rows
+Always drought,1.000,--,35
+Always heat,1.000,--,35
+Most frequent driver (heat),1.000,--,35
+Driver-frequency random,0.896,--,35
+Leave-one-event-year-out grouped SCAA,0.914,0.182,35

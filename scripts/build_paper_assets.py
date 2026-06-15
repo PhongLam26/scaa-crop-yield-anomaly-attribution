@@ -27,16 +27,16 @@ METHOD_LABELS = {
     "00_baseline_v1_raw_yield_scaa": "Raw-yield SCAA",
     "01_residual_target_scaa": "Residual-target SCAA",
     "02_grouped_driver_scaa": "Grouped-driver SCAA",
-    "06_grouped_driver_scaa_temporal_holdout": "Leave-one-year-out grouped SCAA",
+    "06_grouped_driver_scaa_temporal_holdout": "Leave-one-event-year-out grouped SCAA",
     "03_observed_analog_counterfactual": "Observed-analog counterfactual",
 }
 
 
 METHOD_SHORT_LABELS = {
-    "00_baseline_v1_raw_yield_scaa": "Raw yield",
-    "01_residual_target_scaa": "Residual target",
-    "02_grouped_driver_scaa": "Grouped",
-    "06_grouped_driver_scaa_temporal_holdout": "LEO-year grouped",
+    "00_baseline_v1_raw_yield_scaa": "Raw-yield SCAA",
+    "01_residual_target_scaa": "Residual-target SCAA",
+    "02_grouped_driver_scaa": "Grouped-driver SCAA",
+    "06_grouped_driver_scaa_temporal_holdout": "Leave-one-year-out grouped",
     "03_observed_analog_counterfactual": "Observed analog",
 }
 
@@ -228,6 +228,29 @@ def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False)
         lines.append(" & ".join(latex_escape(row[c]) for c in cols) + r" \\")
     lines.extend([r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table}"])
     return "\n".join(lines) + "\n"
+
+
+def write_event_null_table(df: pd.DataFrame) -> None:
+    csv_path = TABLE_CSV / "table09_event_null_baselines.csv"
+    tex_path = TABLES / "table09_event_null_baselines.tex"
+    df.to_csv(csv_path, index=False)
+    cols = ["Method", "Expected match rate", "Median recovery", "n event rows"]
+    lines = [
+        r"\begin{table}[!htbp]",
+        r"\centering",
+        r"\caption{Null baselines for event-year consistency checks.}",
+        r"\label{tab:event_null_baselines}",
+        r"\small",
+        r"\renewcommand{\arraystretch}{1.12}",
+        r"\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lccc@{}}",
+        r"\toprule",
+        " & ".join(latex_escape(c) for c in cols) + r" \\",
+        r"\midrule",
+    ]
+    for _, row in df.iterrows():
+        lines.append(" & ".join(latex_escape(row[c]) for c in cols) + r" \\")
+    lines.extend([r"\bottomrule", r"\end{tabular*}", r"\end{table}"])
+    tex_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def anomaly_keys(df: pd.DataFrame) -> set[tuple[str, str, int]]:
@@ -508,29 +531,23 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
 
     null_table = event_nulls.copy()
     null_method_labels = {
-        "Most frequent driver (heat)": "Most frequent driver",
-        "Retrospective leave-one-event-year-out grouped SCAA": "Leave-one-year-out grouped SCAA",
-    }
-    null_interpretations = {
-        "Always drought": "Broad drought-label baseline.",
-        "Always heat": "Broad heat-label baseline.",
-        "Most frequent driver": "Majority-driver baseline.",
-        "Driver-frequency random": "Driver-frequency baseline.",
-        "Leave-one-year-out grouped SCAA": "Main diagnostic method.",
+        "Retrospective leave-one-event-year-out grouped SCAA": "Leave-one-event-year-out grouped SCAA",
     }
     null_table["method"] = null_table["method"].map(lambda x: null_method_labels.get(x, x))
-    null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: round(float(x), 3))
+    null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: f"{float(x):.3f}")
     null_table["median_recoverable_fraction"] = null_table["median_recoverable_fraction"].map(
-        lambda x: "--" if pd.isna(x) or x == "" else round(float(x), 3)
+        lambda x: "--" if pd.isna(x) or x == "" else f"{float(x):.3f}"
     )
-    null_table["interpretation"] = null_table["method"].map(null_interpretations).fillna(null_table["interpretation"])
-    write_csv_and_tex(
-        null_table,
-        TABLES / "table09_event_null_baselines.csv",
-        TABLES / "table09_event_null_baselines.tex",
-        "Null baselines for event-year consistency checks.",
-        "tab:event_null_baselines",
-    )
+    null_table["n_event_rows"] = null_table["n_event_rows"].astype(int)
+    null_table = null_table.rename(
+        columns={
+            "method": "Method",
+            "expected_match_rate": "Expected match rate",
+            "median_recoverable_fraction": "Median recovery",
+            "n_event_rows": "n event rows",
+        }
+    )[["Method", "Expected match rate", "Median recovery", "n event rows"]]
+    write_event_null_table(null_table)
 
     vuln_table = vulnerability.sort_values("median_effect_t_ha").head(7)[
         ["crop", "driver_group", "median_effect_t_ha", "effect_direction", "states_most_sensitive"]
@@ -745,7 +762,7 @@ def fig_grouped_attribution(grouped: pd.DataFrame) -> None:
     axes[0].axvline(0.5, color="black", linestyle="--", linewidth=1)
     axes[0].set_xlabel("Recoverable fraction")
     axes[0].set_ylabel("Anomaly count")
-    axes[0].set_title("Temporal-holdout grouped-SCAA recovery")
+    axes[0].set_title("Leave-one-event-year-out grouped-SCAA recovery")
     counts = grouped["driver_group"].value_counts().sort_values()
     counts.plot(kind="barh", ax=axes[1], color="#8b6f47")
     axes[1].set_xlabel("Attributed anomalies")
