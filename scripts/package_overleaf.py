@@ -15,22 +15,26 @@ def main() -> None:
         LATEX / "references.bib",
         LATEX / "figures",
         LATEX / "tables",
+        LATEX / "supplement",
     ]
     missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise AssertionError(f"Missing Overleaf inputs: {missing}")
     figures = sorted((LATEX / "figures").glob("*.png"))
     tables = sorted((LATEX / "tables").glob("*.tex"))
+    supplement = sorted((LATEX / "supplement").glob("*.tex"))
     if not figures:
         raise AssertionError("No figures found for Overleaf package")
     if not tables:
         raise AssertionError("No tables found for Overleaf package")
+    if not supplement:
+        raise AssertionError("No supplement tables found for Overleaf package")
 
     ZIP_PATH.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as z:
         for path in [LATEX / "main.tex", LATEX / "references.bib"]:
             z.write(path, path.relative_to(LATEX).as_posix())
-        for path in figures + tables:
+        for path in figures + tables + supplement:
             z.write(path, path.relative_to(LATEX).as_posix())
         z.writestr(
             "README_OVERLEAF.txt",

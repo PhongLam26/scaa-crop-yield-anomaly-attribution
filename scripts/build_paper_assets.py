@@ -19,6 +19,8 @@ PAPER = ROOT / "paper"
 LATEX = PAPER / "latex_source"
 FIGURES = LATEX / "figures"
 TABLES = LATEX / "tables"
+SUPPLEMENT = LATEX / "supplement"
+TABLE_CSV = PAPER / "generated_table_csv"
 
 
 METHOD_LABELS = {
@@ -108,8 +110,12 @@ EVENT_EVIDENCE = [
 def ensure_dirs() -> None:
     FIGURES.mkdir(parents=True, exist_ok=True)
     TABLES.mkdir(parents=True, exist_ok=True)
+    SUPPLEMENT.mkdir(parents=True, exist_ok=True)
+    TABLE_CSV.mkdir(parents=True, exist_ok=True)
     (PAPER / "reference_pack").mkdir(parents=True, exist_ok=True)
     (PAPER / "overleaf_zip").mkdir(parents=True, exist_ok=True)
+    for old_csv in TABLES.glob("*.csv"):
+        old_csv.unlink()
 
 
 def read_inputs() -> dict[str, pd.DataFrame]:
@@ -176,7 +182,7 @@ def validate_inputs(data: dict[str, pd.DataFrame]) -> None:
 
 
 def write_csv_and_tex(df: pd.DataFrame, csv_path: Path, tex_path: Path, caption: str, label: str, index: bool = False) -> None:
-    df.to_csv(csv_path, index=index)
+    df.to_csv(TABLE_CSV / csv_path.name, index=index)
     tex_path.write_text(latex_table(df, caption, label, index=index), encoding="utf-8")
 
 
@@ -361,8 +367,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     driver_features_df = pd.DataFrame(DRIVER_GROUPS)[["driver_group", "features"]]
     write_csv_and_tex(
         driver_features_df,
-        TABLES / "tableS02_driver_group_features.csv",
-        TABLES / "tableS02_driver_group_features.tex",
+        SUPPLEMENT / "tableS02_driver_group_features.csv",
+        SUPPLEMENT / "tableS02_driver_group_features.tex",
         "Full feature list for each grouped-SCAA driver group.",
         "tab:driver_group_features",
     )
@@ -467,13 +473,6 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "External evidence used to pre-specify expected event-year stress groups.",
         "tab:event_evidence_sources",
     )
-    write_csv_and_tex(
-        event_source_table,
-        TABLES / "table_event_evidence_sources.csv",
-        TABLES / "table_event_evidence_sources.tex",
-        "External evidence used to pre-specify expected event-year stress groups.",
-        "tab:event_evidence_sources_alias",
-    )
     event_summary = (
         temporal_event.groupby(["method", "year"], as_index=False)
         .agg(
@@ -488,8 +487,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     event_summary["method"] = event_summary["method"].map(METHOD_LABELS).fillna(event_summary["method"])
     write_csv_and_tex(
         event_summary,
-        TABLES / "tableS06_event_consistency_summary.csv",
-        TABLES / "tableS06_event_consistency_summary.tex",
+        SUPPLEMENT / "tableS06_event_consistency_summary.csv",
+        SUPPLEMENT / "tableS06_event_consistency_summary.tex",
         "Temporal-holdout event-year consistency summary for 2012, 2021, and 2022.",
         "tab:event_consistency_summary",
     )
@@ -522,8 +521,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     threshold_table = build_threshold_sensitivity(frame, grouped)
     write_csv_and_tex(
         threshold_table,
-        TABLES / "tableS03_anomaly_threshold_sensitivity.csv",
-        TABLES / "tableS03_anomaly_threshold_sensitivity.tex",
+        SUPPLEMENT / "tableS03_anomaly_threshold_sensitivity.csv",
+        SUPPLEMENT / "tableS03_anomaly_threshold_sensitivity.tex",
         "Sensitivity of leave-one-event-year-out SCAA summaries to the anomaly z-threshold.",
         "tab:threshold_sensitivity",
     )
@@ -531,8 +530,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     detrend_table = build_detrending_robustness(frame)
     write_csv_and_tex(
         detrend_table,
-        TABLES / "tableS04_detrending_robustness.csv",
-        TABLES / "tableS04_detrending_robustness.tex",
+        SUPPLEMENT / "tableS04_detrending_robustness.csv",
+        SUPPLEMENT / "tableS04_detrending_robustness.tex",
         "Robustness of low-yield anomaly membership to detrending choice.",
         "tab:detrending_robustness",
     )
@@ -550,8 +549,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     crop_state_table = pd.DataFrame(crop_state_rows)
     write_csv_and_tex(
         crop_state_table,
-        TABLES / "tableS05_observed_crop_state_pairs.csv",
-        TABLES / "tableS05_observed_crop_state_pairs.tex",
+        SUPPLEMENT / "tableS05_observed_crop_state_pairs.csv",
+        SUPPLEMENT / "tableS05_observed_crop_state_pairs.tex",
         "Observed crop-state support for vulnerability profiles.",
         "tab:observed_crop_state_pairs",
     )
@@ -578,8 +577,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
             warning_table[col] = warning_table[col].map(lambda x: round(float(x), 3))
     write_csv_and_tex(
         warning_table,
-        TABLES / "tableS07_early_warning_metrics.csv",
-        TABLES / "tableS07_early_warning_metrics.tex",
+        SUPPLEMENT / "tableS07_early_warning_metrics.csv",
+        SUPPLEMENT / "tableS07_early_warning_metrics.tex",
         "Numeric early-warning performance corresponding to Figure 9.",
         "tab:early_warning_metrics",
     )
@@ -587,8 +586,8 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     ref_map = pd.DataFrame(REFERENCE_MAP, columns=["paper_section", "use", "bib_keys"])
     write_csv_and_tex(
         ref_map,
-        TABLES / "tableS01_reference_section_mapping.csv",
-        TABLES / "tableS01_reference_section_mapping.tex",
+        SUPPLEMENT / "tableS01_reference_section_mapping.csv",
+        SUPPLEMENT / "tableS01_reference_section_mapping.tex",
         "Reference-pack mapping to manuscript sections.",
         "tab:reference_mapping",
     )
@@ -936,6 +935,8 @@ def assert_outputs() -> None:
         "table07_crop_vulnerability.tex",
         "table08_residual_model_validation.tex",
         "table09_event_null_baselines.tex",
+    ]
+    expected_supplement = [
         "tableS01_reference_section_mapping.tex",
         "tableS02_driver_group_features.tex",
         "tableS03_anomaly_threshold_sensitivity.tex",
@@ -946,6 +947,7 @@ def assert_outputs() -> None:
     ]
     missing = [str(FIGURES / name) for name in expected_figures if not (FIGURES / name).exists()]
     missing += [str(TABLES / name) for name in expected_tables if not (TABLES / name).exists()]
+    missing += [str(SUPPLEMENT / name) for name in expected_supplement if not (SUPPLEMENT / name).exists()]
     if missing:
         raise AssertionError(f"Missing paper assets: {missing}")
     for figure in expected_figures:
