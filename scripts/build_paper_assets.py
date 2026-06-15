@@ -489,8 +489,12 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
 
 
 def fig_method_workflow() -> None:
-    fig, ax = plt.subplots(figsize=(12, 4.8))
+    fig, ax = plt.subplots(figsize=(13.2, 4.8))
     ax.axis("off")
+    ax.set_xlim(0, 1.08)
+    ax.set_ylim(0, 1)
+    box_w = 0.15
+    box_h = 0.22
     boxes = [
         ("Daily NASA POWER\nweather", 0.02, 0.58),
         ("Growing-season\nextreme features", 0.22, 0.58),
@@ -499,12 +503,12 @@ def fig_method_workflow() -> None:
         ("Low-yield\nanomaly events", 0.42, 0.18),
         ("Residual weather\nmodel", 0.42, 0.58),
         ("Grouped sparse\ncounterfactual", 0.64, 0.58),
-        ("Crop-specific event\nclaim and recovery", 0.82, 0.38),
+        ("Crop-specific event\nclaim and recovery", 0.89, 0.38),
     ]
     for text, x, y in boxes:
-        patch = FancyBboxPatch((x, y), 0.15, 0.22, boxstyle="round,pad=0.02", linewidth=1.3, edgecolor="#333333", facecolor="#f1f5f9")
+        patch = FancyBboxPatch((x, y), box_w, box_h, boxstyle="round,pad=0.02", linewidth=1.3, edgecolor="#333333", facecolor="#f1f5f9")
         ax.add_patch(patch)
-        ax.text(x + 0.075, y + 0.11, text, ha="center", va="center", fontsize=10)
+        ax.text(x + box_w / 2, y + box_h / 2, text, ha="center", va="center", fontsize=10)
     arrows = [
         ((0.17, 0.69), (0.22, 0.69)),
         ((0.17, 0.29), (0.22, 0.29)),
@@ -512,7 +516,7 @@ def fig_method_workflow() -> None:
         ((0.37, 0.69), (0.42, 0.69)),
         ((0.57, 0.69), (0.64, 0.69)),
         ((0.57, 0.29), (0.66, 0.60)),
-        ((0.79, 0.69), (0.82, 0.52)),
+        ((0.79, 0.69), (0.865, 0.52)),
     ]
     for start, end in arrows:
         ax.add_patch(FancyArrowPatch(start, end, arrowstyle="->", mutation_scale=16, linewidth=1.2, color="#333333"))
