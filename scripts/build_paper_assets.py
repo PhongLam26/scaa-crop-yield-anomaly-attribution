@@ -214,7 +214,7 @@ def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False)
     cols = list(table.columns)
     alignment = "l" * len(cols)
     lines = [
-        r"\begin{table}[H]",
+        r"\begin{table}[!htbp]",
         r"\centering",
         rf"\caption{{{latex_escape(caption)}}}",
         rf"\label{{{label}}}",
@@ -949,8 +949,17 @@ def write_supplement_tex() -> None:
 \usepackage{float}
 \usepackage{caption}
 \usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\hypersetup{colorlinks=true,allcolors=black}
 \graphicspath{{figures/}}
+\raggedbottom
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\captionsetup{skip=4pt}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
 
 \title{\textbf{Supplementary Material}\\Sparse Counterfactual Attribution of Crop-Yield Anomalies}
 \author{Tran Dai Phong Lam\\FPT University}
@@ -969,7 +978,7 @@ def write_supplement_tex() -> None:
 \input{supplement/tableS08_event_evidence_sources.tex}
 \input{supplement/tableS06_event_consistency_summary.tex}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.9\linewidth]{fig08_event_validation.png}
   \caption{Event-year consistency with pre-specified heat, drought, and moisture stress groups.}
@@ -979,7 +988,7 @@ def write_supplement_tex() -> None:
 \section{Early-Warning Extension}
 \input{supplement/tableS07_early_warning_metrics.tex}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig09_early_warning.png}
   \caption{Early-warning extension comparing early-season and early-plus-mid-season anomaly risk models.}

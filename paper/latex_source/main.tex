@@ -10,8 +10,17 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage[numbers,sort&compress]{natbib}
-\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\hypersetup{colorlinks=true,allcolors=black}
 \graphicspath{{figures/}}
+\raggedbottom
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\captionsetup{skip=4pt}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
 
 \title{\textbf{Sparse Counterfactual Attribution of Crop-Yield Anomalies\\to Extreme-Weather Drivers}}
 \author{Tran Dai Phong Lam\\FPT University}
@@ -68,7 +77,7 @@ workflow that combines detrended yield anomalies, retrospective leave-one-event-
 residual modelling, physically grouped extreme-weather drivers, and sparse
 counterfactual recovery. Figure \ref{fig:workflow} summarizes the pipeline.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig01_method_workflow.png}
   \caption{SCAA workflow. Daily weather and yield records are converted into
@@ -125,7 +134,7 @@ frame.
 
 Figure~\ref{fig:data_coverage} shows crop coverage and crop-state density.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig02_data_coverage.png}
   \caption{Data coverage by crop and state.}
@@ -222,14 +231,14 @@ as event years used for the consistency check (Figure~\ref{fig:anomaly_timeline}
 
 \input{tables/table03_model_performance.tex}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.68\linewidth]{fig03_yield_prediction.png}
   \caption{Observed versus predicted yield under the forward-time 2016--2021 test.}
   \label{fig:yield_prediction}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig04_anomaly_timeline.png}
   \caption{Low-yield anomaly counts by year, with 2012, 2021, and 2022 highlighted.}
@@ -263,7 +272,7 @@ rather than the main sparse explanation.
 
 \input{tables/table04_method_scorecard.tex}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{fig05_method_scorecard.png}
   \caption{Method comparison by raw metrics with readable method labels. No composite score is used in the main manuscript.}
@@ -280,7 +289,7 @@ Table~\ref{tab:top_claims}. For example, North Dakota Canola in 2012 is attribut
 drought/dry-spell stress, with a modelled recovery of 0.183 t ha$^{-1}$, or 64.0\% of
 the observed detrended yield shortfall.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig06_grouped_driver_attribution.png}
   \caption{Retrospective leave-one-event-year-out grouped-SCAA recoverable fraction and dominant driver-group frequency.}
@@ -321,7 +330,7 @@ with median effect $-0.086$ t ha$^{-1}$.
 
 \input{tables/table07_crop_vulnerability.tex}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.86\linewidth]{fig07_crop_driver_vulnerability.png}
   \caption{Crop-specific vulnerability profiles under adverse observed driver-group extremes.}
