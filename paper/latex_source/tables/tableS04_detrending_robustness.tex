@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Robustness of low-yield anomaly membership to detrending choice.}
+\label{tab:detrending_robustness}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+detrending\_method & anomaly\_count & overlap\_with\_linear & jaccard\_with\_linear \\
+\midrule
+linear & 214 & 214 & 1.0 \\
+quadratic & 194 & 178 & 0.774 \\
+centered\_7yr\_rolling & 186 & 142 & 0.55 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

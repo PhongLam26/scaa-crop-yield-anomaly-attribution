@@ -1,0 +1,4 @@
+detrending_method,anomaly_count,overlap_with_linear,jaccard_with_linear
+linear,214,214,1.0
+quadratic,194,178,0.774
+centered_7yr_rolling,186,142,0.55

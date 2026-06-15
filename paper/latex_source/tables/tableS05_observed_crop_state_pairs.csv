@@ -1,0 +1,5 @@
+crop,observed_crop_state_pairs,observed_crop_state_year_rows,regions
+Barley,10,283,"Colorado, Kansas, Minnesota, Montana, Nebraska, North Dakota, Oklahoma, South Dakota, Texas, Washington"
+Canola,6,133,"Kansas, Minnesota, Montana, North Dakota, Oklahoma, Washington"
+Oats,12,416,"Colorado, Illinois, Iowa, Kansas, Minnesota, Montana, Nebraska, North Dakota, Oklahoma, South Dakota, Texas, Washington"
+Wheat,12,425,"Colorado, Illinois, Iowa, Kansas, Minnesota, Montana, Nebraska, North Dakota, Oklahoma, South Dakota, Texas, Washington"

@@ -9,8 +9,11 @@ The BibTeX file is derived from `paper/reference_pack/crop_yield_anomaly_attribu
 - Yield prediction baselines: Paudel2021, Meroni2021, Khaki2019, LengHall2020.
 - Counterfactual explanation: Wachter2018, Mothilal2020, Ustun2019, Poyiadzi2020, Verma2024.
 - Event-attribution caution: Hannart2016, Otto2017, Oldenborgh2021.
+- External event-year evidence: NOAA2012Drought, DroughtGov2021NorthernPlains, NOAA2022Drought, NOAA2022AugustDrought.
 - Early warning and uncertainty: Anderson2024, Singh2024, Farag2025.
 
 ## Submission Caution
 
 The reference pack contains 2025-2026 and preprint entries. Keep them for drafting, but verify DOI, volume, issue, and final publication status before formal submission.
+
+The submit-facing `paper/latex_source/references.bib` intentionally does not contain internal verification notes.

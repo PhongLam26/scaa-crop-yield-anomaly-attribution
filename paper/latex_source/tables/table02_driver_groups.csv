@@ -1,6 +1,6 @@
-driver_group,description,features
-heat,High-temperature and heatwave exposure,"heat_days_30, heat_days_35, heatwave_events_3d_30, heat_degree_days_30, season_tmax_mean"
-drought,"Rainfall deficit, dry days, and dry-spell persistence","rain_sum, rain_mean, dry_days_1mm, max_dry_spell_1mm, dry_spell_events_7d, dry_spell_events_14d, hot_dry_days_30_1mm"
-frost_cold,Cold and frost exposure,"frost_days_0, cold_days_5, min_tmin, frost_events_2d, season_tmin_mean"
-excess_rain,Wetness and heavy-rainfall intensity,"wet_days_1mm, heavy_rain_days_10, heavy_rain_days_20, max_1day_rain, max_3day_rain, max_7day_rain"
-radiation,Seasonal solar-radiation anomaly,"radiation_sum, radiation_mean"
+driver_group,description
+heat,High-temperature and heatwave exposure
+drought,"Rainfall deficit, dry days, and dry-spell persistence"
+frost_cold,Cold and frost exposure
+excess_rain,Wetness and heavy-rainfall intensity
+radiation,Seasonal solar-radiation anomaly

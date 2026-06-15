@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Sensitivity of temporal-holdout SCAA summaries to the anomaly z-threshold.}
+\label{tab:threshold_sensitivity}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllll}
+\toprule
+threshold & anomaly\_count & share\_of\_dataset & median\_recoverable\_fraction & top\_driver\_groups \\
+\midrule
+z < -1.0 & 214 & 0.17 & 0.116 & drought, heat, excess\_rain \\
+z < -1.5 & 85 & 0.068 & 0.121 & drought, heat, excess\_rain \\
+z < -2.0 & 30 & 0.024 & 0.119 & drought, heat, radiation \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

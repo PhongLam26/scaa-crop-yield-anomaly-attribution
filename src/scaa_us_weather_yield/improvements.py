@@ -55,6 +55,7 @@ METHODS = [
     "00_baseline_v1_raw_yield_scaa",
     "01_residual_target_scaa",
     "02_grouped_driver_scaa",
+    "06_grouped_driver_scaa_temporal_holdout",
     "03_observed_analog_counterfactual",
     "04_crop_specific_vulnerability_profiles",
     "05_early_mid_warning_improved",
@@ -738,6 +739,131 @@ def run_grouped_scaa(
     return attr, attribution_summary("02_grouped_driver_scaa", attr, 9, 10, 9)
 
 
+def run_grouped_scaa_temporal_holdout(
+    improve_root: Path,
+    scored: pd.DataFrame,
+    anomalies: pd.DataFrame,
+    numeric: list[str],
+    categorical: list[str],
+    features: list[str],
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    paths = method_paths(improve_root, "06_grouped_driver_scaa_temporal_holdout")
+    groups = group_features(features)
+    stats_map = feasible_stats(scored, features)
+    records: list[dict[str, Any]] = []
+    detail_rows: list[dict[str, Any]] = []
+
+    for heldout_year, event_rows in anomalies.sort_values(["year", "crop", "region"]).groupby("year", sort=True):
+        train = scored[scored["year"] != heldout_year].copy()
+        holdout_model = make_regressor(numeric, categorical)
+        holdout_model.fit(train[numeric + categorical], train["trend_residual_t_ha"])
+
+        for _, row in event_rows.iterrows():
+            stats = stats_map[(row["region"], row["window"])]
+            base_pred = predict_one(holdout_model, row, numeric, categorical)
+            needed = max(0.0, -base_pred)
+            candidates: list[pd.Series] = []
+            metas: list[dict[str, Any]] = []
+            for group_name, group_cols in groups.items():
+                candidate, details = apply_group_normal(row, stats, group_cols)
+                if not details:
+                    continue
+                candidates.append(candidate[numeric + categorical])
+                metas.append({"driver_group": group_name, "details": details})
+            if candidates:
+                preds = predict_rows(holdout_model, candidates, numeric, categorical)
+                best_i = int(np.argmax(preds - base_pred))
+                best_pred = float(preds[best_i])
+                best_meta = metas[best_i]
+                gain = max(0.0, best_pred - base_pred)
+            else:
+                best_pred = base_pred
+                gain = 0.0
+                best_meta = {"driver_group": "no_feasible_weather_gain", "details": []}
+
+            observed_gap = max(0.0, float(row["trend_yield_t_ha"] - row[TARGET]))
+            recovered = min(gain, needed, observed_gap)
+            fraction = 0.0 if observed_gap <= 0 else float(np.clip(recovered / observed_gap, 0.0, 1.0))
+            details = best_meta["details"]
+            dominant = (
+                max(details, key=lambda d: abs(float(d["standardized_delta"])))["feature"]
+                if details
+                else "no_feasible_weather_gain"
+            )
+            for d in details:
+                detail_rows.append(
+                    {
+                        "crop": row["crop"],
+                        "region": row["region"],
+                        "year": int(row["year"]),
+                        "heldout_year": int(heldout_year),
+                        "driver_group": best_meta["driver_group"],
+                        **d,
+                        "prediction_gain_t_ha": gain,
+                    }
+                )
+            records.append(
+                {
+                    "crop": row["crop"],
+                    "region": row["region"],
+                    "year": int(row["year"]),
+                    "heldout_year": int(heldout_year),
+                    "train_rows": int(len(train)),
+                    "window": row["window"],
+                    "trend_residual_z": float(row["trend_residual_z"]),
+                    "driver_group": best_meta["driver_group"],
+                    "dominant_feature": dominant,
+                    "observed_yield_t_ha": float(row[TARGET]),
+                    "trend_yield_t_ha": float(row["trend_yield_t_ha"]),
+                    "yield_gap_t_ha": observed_gap,
+                    "base_predicted_residual_t_ha": base_pred,
+                    "counterfactual_predicted_residual_t_ha": best_pred,
+                    "recovered_gap_t_ha": recovered,
+                    "recoverable_fraction": fraction,
+                    "n_changed_features": len(details),
+                    "changed_features_json": compact_changes(
+                        [{**d, "prediction_gain_t_ha": gain} for d in details]
+                    ),
+                }
+            )
+
+    attr = pd.DataFrame(records)
+    details = pd.DataFrame(detail_rows)
+    attr.to_csv(paths.outputs / "temporal_holdout_attributions.csv", index=False)
+    details.to_csv(paths.outputs / "temporal_holdout_feature_changes.csv", index=False)
+    common_claim_columns(attr, "06_grouped_driver_scaa_temporal_holdout").to_csv(
+        paths.outputs / "crop_driver_claims.csv", index=False
+    )
+    plot_recoverable(
+        attr,
+        paths.figures / "recoverable_fraction_distribution.png",
+        "Temporal-holdout grouped SCAA",
+    )
+    plot_driver_counts(attr, paths.figures / "driver_group_frequency.png", "Temporal-holdout driver groups")
+    plot_crop_driver_heatmap(
+        attr,
+        paths.figures / "crop_driver_recoverability.png",
+        "Temporal-holdout SCAA by crop and driver",
+    )
+    write_method_note(
+        paths,
+        "Temporal-Holdout Grouped-Driver SCAA",
+        [
+            "For each anomaly year, the residual model is trained after excluding every row from that year.",
+            "The residual target is raw detrended yield residual in t/ha; standardized residuals only screen anomalies.",
+            "This is the main paper protocol because it avoids explaining event rows with a model fitted on the same year.",
+        ],
+    )
+    write_attribution_results(
+        paths,
+        "Temporal-Holdout Grouped-Driver SCAA",
+        "Main paper method: grouped SCAA with event-year holdout residual models.",
+        attr,
+        {"driver_groups": ", ".join(groups), "unique_heldout_years": int(attr["heldout_year"].nunique())},
+    )
+    return attr, attribution_summary("06_grouped_driver_scaa_temporal_holdout", attr, 10, 10, 9)
+
+
 def run_observed_analog(
     improve_root: Path,
     scored: pd.DataFrame,
@@ -1296,7 +1422,9 @@ def write_comparison_report(
         "",
         "## Method Scorecard",
         "",
-        "Note: observed analog counterfactuals may score highly because they replace the full weather vector with a real normal season; use them as robustness evidence, while residual/grouped SCAA remain the main sparse attribution candidates.",
+        "Note: `total_score` is kept for internal method triage only. The paper reports raw metrics instead.",
+        "",
+        "`06_grouped_driver_scaa_temporal_holdout` is the main submission method. `02_grouped_driver_scaa` is kept as an in-sample exploratory comparison, and `03_observed_analog_counterfactual` is a plausibility robustness check.",
         "",
         "| Method | Total | Idea | Crop-specific | Event | Recoverability | Plausibility | Median phi | Weather-driven |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -1308,13 +1436,14 @@ def write_comparison_report(
             f"{r['recoverability_score']:.1f} | {r['physical_plausibility_score']:.1f} | "
             f"{fmt(r['median_recoverable_fraction'])} | {fmt(r['weather_driven_rate'])} |"
         )
+    temporal_claims = all_claims[all_claims["method"] == "06_grouped_driver_scaa_temporal_holdout"]
     grouped_claims = all_claims[all_claims["method"] == "02_grouped_driver_scaa"]
-    claim_source = grouped_claims if len(grouped_claims) else all_claims
-    lines.extend(["", "## Top Paper-Friendly Grouped SCAA Claims", ""])
+    claim_source = temporal_claims if len(temporal_claims) else grouped_claims if len(grouped_claims) else all_claims
+    lines.extend(["", "## Top Paper-Friendly Temporal-Holdout SCAA Claims", ""])
     for _, r in claim_source.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(12).iterrows():
         lines.append(f"- {r['claim_sentence']}")
     if len(event_validation):
-        lines.extend(["", "## Event Validation 2012/2021/2022", ""])
+        lines.extend(["", "## Event-Year Consistency Check 2012/2021/2022", ""])
         match = event_validation.groupby("method")["expected_match"].mean().sort_values(ascending=False)
         for method, rate in match.items():
             lines.append(f"- {method}: {rate:.1%} of event-year attributions match expected heat/drought/moisture groups.")
@@ -1328,22 +1457,19 @@ def write_comparison_report(
 
 
 def write_decision_report(improve_root: Path, scorecard: pd.DataFrame, all_claims: pd.DataFrame, vulnerability: pd.DataFrame) -> None:
-    attribution_candidates = scorecard[
-        scorecard["method"].isin(["01_residual_target_scaa", "02_grouped_driver_scaa"])
-    ].sort_values("total_score", ascending=False)
-    main = attribution_candidates.iloc[0]
+    main = scorecard[scorecard["method"] == "06_grouped_driver_scaa_temporal_holdout"].iloc[0]
     grouped = scorecard[scorecard["method"] == "02_grouped_driver_scaa"].iloc[0]
     analog = scorecard[scorecard["method"] == "03_observed_analog_counterfactual"].iloc[0]
     lines = [
         "# Paper Contribution Decision",
         "",
-        f"Recommended main attribution method: `{main['method']}` with total score {main['total_score']:.2f}.",
+        f"Recommended main attribution method: `{main['method']}` because it excludes each event year from the residual-model fit before attribution.",
         "",
-        "`03_observed_analog_counterfactual` can score higher numerically because it replaces the full weather vector with a real normal season. Use it as robustness evidence, not as the main sparse attribution method.",
+        "`03_observed_analog_counterfactual` can recover more because it replaces the full weather vector with a real normal season. Use it as robustness evidence, not as the main sparse attribution method.",
         "",
         "## Recommended Paper Framing",
         "",
-        "- Main contribution: detrended anomaly attribution using sparse counterfactual weather changes.",
+        "- Main contribution: detrended anomaly attribution using event-year temporal-holdout residual models and grouped sparse counterfactual weather changes.",
         "- Explanation layer: report both dominant feature and physical driver group so each claim is crop-specific.",
         "- Robustness: use observed analog counterfactuals to show the weather replacement is historically plausible.",
         "- Supplementary contribution: crop-specific vulnerability profiles answer which weather stress lowers which crop.",
@@ -1352,6 +1478,7 @@ def write_decision_report(improve_root: Path, scorecard: pd.DataFrame, all_claim
         "",
         "- V1 proves the yield model and anomaly pipeline work, but its raw-yield attribution is conservative.",
         "- Residual and grouped methods target the actual object of interest: abnormal detrended yield shortfall.",
+        "- Temporal holdout reduces in-sample attribution concerns before the paper makes event-level claims.",
         "- The global claim table states crop, region, year, driver group, dominant feature, and recovered t/ha.",
         "",
         "## Best Example Claims",
@@ -1367,8 +1494,9 @@ def write_decision_report(improve_root: Path, scorecard: pd.DataFrame, all_claim
             "",
             "## Method Roles",
             "",
-            f"- `02_grouped_driver_scaa`: paper-friendly grouped explanation score {grouped['total_score']:.2f}.",
-            f"- `03_observed_analog_counterfactual`: robustness score {analog['total_score']:.2f}.",
+            f"- `06_grouped_driver_scaa_temporal_holdout`: main submission method; median phi {main['median_recoverable_fraction']:.3f}, weather-driven rate {main['weather_driven_rate']:.1%}.",
+            f"- `02_grouped_driver_scaa`: in-sample exploratory grouped explanation; median phi {grouped['median_recoverable_fraction']:.3f}.",
+            f"- `03_observed_analog_counterfactual`: robustness check; median phi {analog['median_recoverable_fraction']:.3f}.",
             "- `04_crop_specific_vulnerability_profiles`: use as a table answering which weather driver reduces each crop.",
             "- `05_early_mid_warning_improved`: keep as an operational extension, not the core paper contribution.",
             "",
@@ -1423,6 +1551,11 @@ def run_improvement_suite(root: Path | None = None) -> None:
     all_scores.append(score)
     claim_frames.append(common_claim_columns(grouped_attr, "02_grouped_driver_scaa"))
     event_frames.append(event_validation_rows("02_grouped_driver_scaa", grouped_attr))
+
+    temporal_attr, score = run_grouped_scaa_temporal_holdout(improve_root, scored, anomalies, numeric, categorical, features)
+    all_scores.append(score)
+    claim_frames.append(common_claim_columns(temporal_attr, "06_grouped_driver_scaa_temporal_holdout"))
+    event_frames.append(event_validation_rows("06_grouped_driver_scaa_temporal_holdout", temporal_attr))
 
     analog_attr, score = run_observed_analog(improve_root, scored, anomalies, residual_model, numeric, categorical, features)
     all_scores.append(score)

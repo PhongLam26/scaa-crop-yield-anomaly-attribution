@@ -1,7 +1,8 @@
-method,total_score,median_recoverable_fraction,weather_driven_rate,event_expected_match_rate
-00_baseline_v1_raw_yield_scaa,6.498,0.379,0.262,0.829
-01_residual_target_scaa,7.511,0.482,0.472,0.629
-02_grouped_driver_scaa,8.745,0.589,0.734,0.886
-03_observed_analog_counterfactual,9.018,0.853,0.972,0.971
-04_crop_specific_vulnerability_profiles,5.284,,,
-05_early_mid_warning_improved,4.753,,,
+method,median_recoverable_fraction,weather_driven_rate,event_expected_match_rate
+00_baseline_v1_raw_yield_scaa,0.379,0.262,0.829
+01_residual_target_scaa,0.482,0.472,0.629
+02_grouped_driver_scaa,0.589,0.734,0.886
+06_grouped_driver_scaa_temporal_holdout,0.116,0.056,0.914
+03_observed_analog_counterfactual,0.853,0.972,0.971
+04_crop_specific_vulnerability_profiles,,,
+05_early_mid_warning_improved,,,

@@ -1,11 +1,6 @@
 crop,region,year,driver_group,dominant_feature,yield_gap_t_ha,recovered_gap_t_ha,recoverable_fraction
-Canola,North Dakota,2021,drought,dry_spell_events_7d,0.522,0.522,1.0
-Barley,Montana,2002,heat,heatwave_events_3d_35,0.387,0.387,1.0
-Canola,North Dakota,2002,drought,max_dry_spell_1mm,0.263,0.263,1.0
-Canola,Minnesota,2021,heat,heat_days_30,0.379,0.372,0.982
-Oats,Oklahoma,2007,drought,rain_sum,0.31,0.286,0.923
-Oats,South Dakota,2011,excess_rain,max_3day_rain,0.572,0.525,0.917
-Oats,Illinois,1993,drought,dry_days_1mm,0.437,0.4,0.915
-Wheat,Colorado,2013,drought,dry_spell_events_7d,0.687,0.625,0.909
-Canola,Montana,2002,heat,heatwave_events_3d_35,0.389,0.351,0.901
-Oats,South Dakota,2021,excess_rain,wet_days_1mm,0.489,0.441,0.901
+Oats,South Dakota,2006,drought,rain_mean,0.381,0.273,0.717
+Barley,Washington,2015,drought,hot_dry_days_30_1mm,0.862,0.598,0.693
+Wheat,Washington,1992,drought,max_dry_spell_1mm,0.579,0.39,0.672
+Wheat,Texas,2009,drought,dry_spell_events_14d,0.41,0.273,0.666
+Canola,North Dakota,2012,drought,hot_dry_days_30_1mm,0.285,0.183,0.64

@@ -61,6 +61,31 @@ REFERENCE_MAP = [
 ]
 
 
+EVENT_EVIDENCE = [
+    {
+        "year": 2012,
+        "expected_stress_group": "heat, drought",
+        "affected_region_crop_scope": "Central United States and Plains crop belt; crop-state rows in the processed frame",
+        "external_source": "NOAA/NCEI Annual 2012 Drought Report; NWS 2012 drought summary",
+        "pre_specified": "yes",
+    },
+    {
+        "year": 2021,
+        "expected_stress_group": "heat, drought",
+        "affected_region_crop_scope": "Northern Plains and Canadian Prairie drought context; U.S. crop-state rows in the processed frame",
+        "external_source": "Drought.gov/NIDIS report on the 2020-2021 Northern Plains and Canadian Prairies drought",
+        "pre_specified": "yes",
+    },
+    {
+        "year": 2022,
+        "expected_stress_group": "heat, drought, excess_rain",
+        "affected_region_crop_scope": "U.S. drought and regional wetness episodes during the 2022 growing season",
+        "external_source": "NOAA/NCEI Annual 2022 and August 2022 Drought Reports",
+        "pre_specified": "yes",
+    },
+]
+
+
 def ensure_dirs() -> None:
     FIGURES.mkdir(parents=True, exist_ok=True)
     TABLES.mkdir(parents=True, exist_ok=True)
@@ -75,6 +100,13 @@ def read_inputs() -> dict[str, pd.DataFrame]:
         "anomalies": pd.read_csv(ROOT / "outputs" / "low_yield_anomalies.csv"),
         "scorecard": pd.read_csv(ROOT / "improve_target" / "method_scorecard.csv"),
         "grouped_attr": pd.read_csv(ROOT / "improve_target" / "02_grouped_driver_scaa" / "outputs" / "grouped_driver_attributions.csv"),
+        "temporal_attr": pd.read_csv(
+            ROOT
+            / "improve_target"
+            / "06_grouped_driver_scaa_temporal_holdout"
+            / "outputs"
+            / "temporal_holdout_attributions.csv"
+        ),
         "analog_attr": pd.read_csv(ROOT / "improve_target" / "03_observed_analog_counterfactual" / "outputs" / "observed_analog_attributions.csv"),
         "claims": pd.read_csv(ROOT / "improve_target" / "crop_driver_claims.csv"),
         "event_validation": pd.read_csv(ROOT / "improve_target" / "event_validation_2012_2021_2022.csv"),
@@ -97,6 +129,11 @@ def validate_inputs(data: dict[str, pd.DataFrame]) -> None:
         raise AssertionError("A claim recovers more than the observed detrended shortfall")
     if claims["claim_sentence"].isna().any():
         raise AssertionError("Missing claim sentence")
+    temporal = data["temporal_attr"]
+    if temporal.empty:
+        raise AssertionError("Temporal-holdout grouped SCAA output is empty")
+    if (temporal["recovered_gap_t_ha"] > temporal["yield_gap_t_ha"] + 1e-9).any():
+        raise AssertionError("Temporal-holdout recovery exceeds observed detrended shortfall")
 
 
 def write_csv_and_tex(df: pd.DataFrame, csv_path: Path, tex_path: Path, caption: str, label: str, index: bool = False) -> None:
@@ -146,12 +183,107 @@ def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False)
     return "\n".join(lines) + "\n"
 
 
+def anomaly_keys(df: pd.DataFrame) -> set[tuple[str, str, int]]:
+    return set(zip(df["crop"].astype(str), df["region"].astype(str), df["year"].astype(int)))
+
+
+def score_linear_anomalies(frame: pd.DataFrame, threshold: float = -1.0) -> pd.DataFrame:
+    pieces = []
+    for (_, _), group in frame.groupby(["crop", "region"], sort=True):
+        g = group.sort_values("year").copy()
+        x = g["year"].to_numpy(dtype=float)
+        y = g["yield_t_ha"].to_numpy(dtype=float)
+        slope, intercept = np.polyfit(x, y, 1)
+        trend = slope * x + intercept
+        residual = y - trend
+        std = np.std(residual, ddof=1)
+        z = np.zeros_like(residual) if not np.isfinite(std) or std == 0 else residual / std
+        g["trend_residual_z"] = z
+        g["is_low_yield_anomaly"] = g["trend_residual_z"] < threshold
+        pieces.append(g)
+    return pd.concat(pieces, ignore_index=True)
+
+
+def anomaly_membership_for_detrend(frame: pd.DataFrame, method: str) -> set[tuple[str, str, int]]:
+    rows = []
+    for (_, _), group in frame.groupby(["crop", "region"], sort=True):
+        g = group.sort_values("year").copy()
+        y = g["yield_t_ha"].to_numpy(dtype=float)
+        x = g["year"].to_numpy(dtype=float)
+        if method == "linear":
+            coef = np.polyfit(x, y, 1)
+            trend = np.polyval(coef, x)
+        elif method == "quadratic":
+            deg = 2 if len(g) >= 4 else 1
+            coef = np.polyfit(x, y, deg)
+            trend = np.polyval(coef, x)
+        elif method == "centered_7yr_rolling":
+            trend = (
+                g["yield_t_ha"]
+                .rolling(window=7, center=True, min_periods=3)
+                .median()
+                .bfill()
+                .ffill()
+                .to_numpy(dtype=float)
+            )
+        else:
+            raise ValueError(f"Unknown detrending method: {method}")
+        residual = y - trend
+        std = np.std(residual, ddof=1)
+        z = np.zeros_like(residual) if not np.isfinite(std) or std == 0 else residual / std
+        g["is_low_yield_anomaly"] = z < -1.0
+        rows.append(g[g["is_low_yield_anomaly"]])
+    return anomaly_keys(pd.concat(rows, ignore_index=True)) if rows else set()
+
+
+def build_threshold_sensitivity(frame: pd.DataFrame, temporal: pd.DataFrame) -> pd.DataFrame:
+    if "trend_residual_z" not in temporal.columns:
+        scored = score_linear_anomalies(frame)
+        temporal = temporal.merge(
+            scored[["crop", "region", "year", "trend_residual_z"]],
+            on=["crop", "region", "year"],
+            how="left",
+        )
+    rows = []
+    for threshold in [-1.0, -1.5, -2.0]:
+        subset = temporal[temporal["trend_residual_z"] < threshold].copy()
+        top_groups = ", ".join(subset["driver_group"].value_counts().head(3).index.tolist()) if len(subset) else ""
+        rows.append(
+            {
+                "threshold": f"z < {threshold:.1f}",
+                "anomaly_count": int(len(subset)),
+                "share_of_dataset": round(float(len(subset) / len(frame)), 3),
+                "median_recoverable_fraction": "" if subset.empty else round(float(subset["recoverable_fraction"].median()), 3),
+                "top_driver_groups": top_groups,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def build_detrending_robustness(frame: pd.DataFrame) -> pd.DataFrame:
+    linear = anomaly_membership_for_detrend(frame, "linear")
+    rows = []
+    for method in ["linear", "quadratic", "centered_7yr_rolling"]:
+        keys = anomaly_membership_for_detrend(frame, method)
+        overlap = len(keys & linear)
+        union = len(keys | linear)
+        rows.append(
+            {
+                "detrending_method": method,
+                "anomaly_count": len(keys),
+                "overlap_with_linear": overlap,
+                "jaccard_with_linear": round(float(overlap / union), 3) if union else 1.0,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def build_tables(data: dict[str, pd.DataFrame]) -> None:
     frame = data["frame"]
     anomalies = data["anomalies"]
     yield_metrics = data["yield_metrics"]
     scorecard = data["scorecard"]
-    grouped = data["grouped_attr"]
+    grouped = data["temporal_attr"]
     event = data["event_validation"]
     vulnerability = data["vulnerability"]
 
@@ -176,13 +308,21 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "tab:dataset_summary",
     )
 
-    driver_df = pd.DataFrame(DRIVER_GROUPS)
+    driver_df = pd.DataFrame(DRIVER_GROUPS)[["driver_group", "description"]]
     write_csv_and_tex(
         driver_df,
         TABLES / "table02_driver_groups.csv",
         TABLES / "table02_driver_groups.tex",
         "Extreme-weather driver groups used by grouped SCAA.",
         "tab:driver_groups",
+    )
+    driver_features_df = pd.DataFrame(DRIVER_GROUPS)[["driver_group", "features"]]
+    write_csv_and_tex(
+        driver_features_df,
+        TABLES / "tableS02_driver_group_features.csv",
+        TABLES / "tableS02_driver_group_features.tex",
+        "Full feature list for each grouped-SCAA driver group.",
+        "tab:driver_group_features",
     )
 
     metrics_rows = []
@@ -216,7 +356,6 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
 
     score_cols = [
         "method",
-        "total_score",
         "median_recoverable_fraction",
         "weather_driven_rate",
         "event_expected_match_rate",
@@ -228,11 +367,11 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         score_table,
         TABLES / "table04_method_scorecard.csv",
         TABLES / "table04_method_scorecard.tex",
-        "Method comparison scorecard.",
+        "Method comparison by raw metrics; composite scores are not used in the manuscript.",
         "tab:method_scorecard",
     )
 
-    top_claims = grouped.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(10)
+    top_claims = grouped.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(5)
     top_claims = top_claims[
         [
             "crop",
@@ -251,12 +390,28 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         top_claims,
         TABLES / "table05_top_event_claims.csv",
         TABLES / "table05_top_event_claims.tex",
-        "Top grouped-SCAA crop-region-year attribution claims.",
+        "Top temporal-holdout grouped-SCAA crop-region-year attribution claims.",
         "tab:top_claims",
     )
 
+    temporal_event = event[event["method"] == "06_grouped_driver_scaa_temporal_holdout"].copy()
+    event_source_table = pd.DataFrame(EVENT_EVIDENCE)
+    write_csv_and_tex(
+        event_source_table,
+        TABLES / "table06_event_evidence_sources.csv",
+        TABLES / "table06_event_evidence_sources.tex",
+        "External evidence used to pre-specify expected event-year stress groups.",
+        "tab:event_evidence_sources",
+    )
+    write_csv_and_tex(
+        event_source_table,
+        TABLES / "table_event_evidence_sources.csv",
+        TABLES / "table_event_evidence_sources.tex",
+        "External evidence used to pre-specify expected event-year stress groups.",
+        "tab:event_evidence_sources_alias",
+    )
     event_summary = (
-        event.groupby(["method", "year"], as_index=False)
+        temporal_event.groupby(["method", "year"], as_index=False)
         .agg(
             n_events=("expected_match", "size"),
             expected_match_rate=("expected_match", "mean"),
@@ -268,13 +423,13 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     event_summary["median_recoverable"] = event_summary["median_recoverable"].round(3)
     write_csv_and_tex(
         event_summary,
-        TABLES / "table06_event_validation.csv",
-        TABLES / "table06_event_validation.tex",
-        "Event validation summary for 2012, 2021, and 2022.",
-        "tab:event_validation",
+        TABLES / "tableS06_event_consistency_summary.csv",
+        TABLES / "tableS06_event_consistency_summary.tex",
+        "Temporal-holdout event-year consistency summary for 2012, 2021, and 2022.",
+        "tab:event_consistency_summary",
     )
 
-    vuln_table = vulnerability.sort_values("median_effect_t_ha").head(12)[
+    vuln_table = vulnerability.sort_values("median_effect_t_ha").head(7)[
         ["crop", "driver_group", "median_effect_t_ha", "effect_direction", "states_most_sensitive"]
     ].copy()
     vuln_table["median_effect_t_ha"] = vuln_table["median_effect_t_ha"].round(3)
@@ -284,6 +439,43 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         TABLES / "table07_crop_vulnerability.tex",
         "Crop-specific vulnerability profiles under adverse observed weather extremes.",
         "tab:crop_vulnerability",
+    )
+
+    threshold_table = build_threshold_sensitivity(frame, grouped)
+    write_csv_and_tex(
+        threshold_table,
+        TABLES / "tableS03_anomaly_threshold_sensitivity.csv",
+        TABLES / "tableS03_anomaly_threshold_sensitivity.tex",
+        "Sensitivity of temporal-holdout SCAA summaries to the anomaly z-threshold.",
+        "tab:threshold_sensitivity",
+    )
+
+    detrend_table = build_detrending_robustness(frame)
+    write_csv_and_tex(
+        detrend_table,
+        TABLES / "tableS04_detrending_robustness.csv",
+        TABLES / "tableS04_detrending_robustness.tex",
+        "Robustness of low-yield anomaly membership to detrending choice.",
+        "tab:detrending_robustness",
+    )
+
+    crop_state_rows = []
+    for crop, group in frame.groupby("crop", sort=True):
+        crop_state_rows.append(
+            {
+                "crop": crop,
+                "observed_crop_state_pairs": int(group[["crop", "region"]].drop_duplicates().shape[0]),
+                "observed_crop_state_year_rows": int(len(group)),
+                "regions": ", ".join(sorted(group["region"].unique())),
+            }
+        )
+    crop_state_table = pd.DataFrame(crop_state_rows)
+    write_csv_and_tex(
+        crop_state_table,
+        TABLES / "tableS05_observed_crop_state_pairs.csv",
+        TABLES / "tableS05_observed_crop_state_pairs.tex",
+        "Observed crop-state support for vulnerability profiles.",
+        "tab:observed_crop_state_pairs",
     )
 
     ref_map = pd.DataFrame(REFERENCE_MAP, columns=["paper_section", "use", "bib_keys"])
@@ -389,12 +581,21 @@ def fig_anomaly_timeline(anomalies: pd.DataFrame) -> None:
 
 
 def fig_method_scorecard(scorecard: pd.DataFrame) -> None:
-    df = scorecard.sort_values("total_score")
-    fig, ax = plt.subplots(figsize=(9, 4.8))
-    ax.barh(df["method"], df["total_score"], color="#5f8f6b")
-    ax.set_xlabel("Composite score")
-    ax.set_title("Improvement-method scorecard")
-    ax.grid(axis="x", alpha=0.25)
+    df = scorecard[["method", "median_recoverable_fraction", "weather_driven_rate", "event_expected_match_rate"]].copy()
+    df = df.sort_values("median_recoverable_fraction")
+    x = np.arange(len(df))
+    width = 0.25
+    fig, ax = plt.subplots(figsize=(11, 5.2))
+    ax.bar(x - width, df["median_recoverable_fraction"], width, label="Median recovery", color="#4d7ea8")
+    ax.bar(x, df["weather_driven_rate"], width, label="Weather-driven rate", color="#5f8f6b")
+    ax.bar(x + width, df["event_expected_match_rate"], width, label="Event-year consistency", color="#c47f47")
+    ax.set_xticks(x)
+    ax.set_xticklabels(df["method"], rotation=35, ha="right")
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("Rate or fraction")
+    ax.set_title("Method comparison by raw metrics")
+    ax.legend(loc="upper left", ncols=3, fontsize=8)
+    ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
     fig.savefig(FIGURES / "fig05_method_scorecard.png", dpi=220)
     plt.close(fig)
@@ -406,7 +607,7 @@ def fig_grouped_attribution(grouped: pd.DataFrame) -> None:
     axes[0].axvline(0.5, color="black", linestyle="--", linewidth=1)
     axes[0].set_xlabel("Recoverable fraction")
     axes[0].set_ylabel("Anomaly count")
-    axes[0].set_title("Grouped-SCAA recovery")
+    axes[0].set_title("Temporal-holdout grouped-SCAA recovery")
     counts = grouped["driver_group"].value_counts().sort_values()
     counts.plot(kind="barh", ax=axes[1], color="#8b6f47")
     axes[1].set_xlabel("Attributed anomalies")
@@ -440,7 +641,8 @@ def fig_vulnerability(vulnerability: pd.DataFrame) -> None:
 
 
 def fig_event_validation(event: pd.DataFrame) -> None:
-    pivot = event.pivot_table(index="method", columns="year", values="expected_match", aggfunc="mean")
+    temporal = event[event["method"] == "06_grouped_driver_scaa_temporal_holdout"].copy()
+    pivot = temporal.pivot_table(index="method", columns="year", values="expected_match", aggfunc="mean")
     fig, ax = plt.subplots(figsize=(8, 4.8))
     im = ax.imshow(pivot.to_numpy(), cmap="YlGnBu", aspect="auto", vmin=0, vmax=1)
     ax.set_xticks(range(len(pivot.columns)))
@@ -450,7 +652,7 @@ def fig_event_validation(event: pd.DataFrame) -> None:
     for i in range(len(pivot.index)):
         for j in range(len(pivot.columns)):
             ax.text(j, i, f"{pivot.iloc[i, j]:.0%}", ha="center", va="center", fontsize=9)
-    ax.set_title("Event-year agreement with expected heat/drought/moisture groups")
+    ax.set_title("Event-year consistency with pre-specified stress groups")
     fig.colorbar(im, ax=ax, label="Expected-group match rate")
     fig.tight_layout()
     fig.savefig(FIGURES / "fig08_event_validation.png", dpi=220)
@@ -482,7 +684,7 @@ def build_figures(data: dict[str, pd.DataFrame]) -> None:
     fig_prediction(data["predictions"])
     fig_anomaly_timeline(data["anomalies"])
     fig_method_scorecard(data["scorecard"])
-    fig_grouped_attribution(data["grouped_attr"])
+    fig_grouped_attribution(data["temporal_attr"])
     fig_vulnerability(data["vulnerability"])
     fig_event_validation(data["event_validation"])
     fig_warning(data["warning"])
@@ -504,6 +706,11 @@ def write_manifest(data: dict[str, pd.DataFrame]) -> None:
         ROOT / "outputs" / "yield_model_metrics.csv",
         ROOT / "improve_target" / "method_scorecard.csv",
         ROOT / "improve_target" / "crop_driver_claims.csv",
+        ROOT
+        / "improve_target"
+        / "06_grouped_driver_scaa_temporal_holdout"
+        / "outputs"
+        / "temporal_holdout_attributions.csv",
     ]
     lines = [
         "# Data Manifest",
@@ -544,13 +751,13 @@ def write_reproducibility() -> None:
         "python scripts/package_overleaf.py",
         "```",
         "",
-        "The paper uses `02_grouped_driver_scaa` as the main attribution method and `03_observed_analog_counterfactual` as a robustness check.",
+        "The paper uses `06_grouped_driver_scaa_temporal_holdout` as the main attribution method, keeps `02_grouped_driver_scaa` as an in-sample exploratory comparison, and uses `03_observed_analog_counterfactual` as a plausibility robustness check.",
         "",
         "The generated paper files are stored in `paper/latex_source/`; the Overleaf upload archive is stored in `paper/overleaf_zip/`.",
         "",
         "Local TeX compilation is optional. If a TeX distribution is unavailable, upload the Overleaf zip and compile there.",
         "",
-        "Reference metadata was extracted from `paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; entries marked as preprint or future-year references should be rechecked before journal submission.",
+        "Reference metadata was extracted from `paper/reference_pack/crop_yield_anomaly_attribution_references.docx`; preprint and future-year entries are tracked in `paper/REFERENCE_AUDIT.md` rather than in submit-ready BibTeX notes.",
     ]
     (PAPER / "REPRODUCIBILITY.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -575,11 +782,14 @@ def write_reference_audit() -> None:
         "- Yield prediction baselines: Paudel2021, Meroni2021, Khaki2019, LengHall2020.",
         "- Counterfactual explanation: Wachter2018, Mothilal2020, Ustun2019, Poyiadzi2020, Verma2024.",
         "- Event-attribution caution: Hannart2016, Otto2017, Oldenborgh2021.",
+        "- External event-year evidence: NOAA2012Drought, DroughtGov2021NorthernPlains, NOAA2022Drought, NOAA2022AugustDrought.",
         "- Early warning and uncertainty: Anderson2024, Singh2024, Farag2025.",
         "",
         "## Submission Caution",
         "",
         "The reference pack contains 2025-2026 and preprint entries. Keep them for drafting, but verify DOI, volume, issue, and final publication status before formal submission.",
+        "",
+        "The submit-facing `paper/latex_source/references.bib` intentionally does not contain internal verification notes.",
     ]
     (PAPER / "REFERENCE_AUDIT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -602,9 +812,14 @@ def assert_outputs() -> None:
         "table03_model_performance.tex",
         "table04_method_scorecard.tex",
         "table05_top_event_claims.tex",
-        "table06_event_validation.tex",
+        "table06_event_evidence_sources.tex",
         "table07_crop_vulnerability.tex",
         "tableS01_reference_section_mapping.tex",
+        "tableS02_driver_group_features.tex",
+        "tableS03_anomaly_threshold_sensitivity.tex",
+        "tableS04_detrending_robustness.tex",
+        "tableS05_observed_crop_state_pairs.tex",
+        "tableS06_event_consistency_summary.tex",
     ]
     missing = [str(FIGURES / name) for name in expected_figures if not (FIGURES / name).exists()]
     missing += [str(TABLES / name) for name in expected_tables if not (TABLES / name).exists()]
