@@ -1,0 +1,141 @@
+method,crop,region,year,driver_group,dominant_feature,recoverable_fraction,recovered_gap_t_ha,yield_gap_t_ha,expected_groups,expected_match
+00_baseline_v1_raw_yield_scaa,Barley,South Dakota,2012,heat,growing_degree_days_base5,0.2057270936854575,0.1193150952380937,0.5799678258252081,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,North Dakota,2012,heat,heat_days_30,0.737626085558895,0.210570428571428,0.285470420168072,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Kansas,2012,heat,heat_days_30,0.3794606178669844,0.26207952380952326,0.6906633033033016,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Colorado,2021,excess_rain,max_1day_rain,0.1731270823581236,0.23218542857142485,1.3411271385671224,"drought,heat",False
+00_baseline_v1_raw_yield_scaa,Barley,Minnesota,2021,heat,season_tmean_mean,0.31854597971305654,0.19536261904761784,0.6132948820248769,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Montana,2021,drought,hot_dry_days_30_1mm,0.2700486029060323,0.21397395238095157,0.792353487773485,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,North Dakota,2021,drought,hot_dry_days_30_1mm,0.299736382836903,0.2730955238095243,0.9111190347490283,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,South Dakota,2021,heat,heatwave_events_3d_30,0.22695385167386253,0.3189680476190504,1.4054313036176809,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Washington,2021,frost_cold,season_tmin_mean,0.08880390104198141,0.12871066666666747,1.4493807722007666,"drought,heat",False
+00_baseline_v1_raw_yield_scaa,Canola,Minnesota,2021,drought,hot_dry_days_30_1mm,0.6218064225143611,0.23588609523809725,0.3793561576354565,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,Montana,2021,heat,heatwave_events_3d_30,0.7353393108085682,0.33047733333333507,0.4494215506715493,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,North Dakota,2021,drought,hot_dry_days_30_1mm,0.3979296685047033,0.20787942857142847,0.5224024369747928,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,Washington,2021,drought,hot_dry_days_30_1mm,0.21600346911473295,0.13935438095238178,0.6451488095238043,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Minnesota,2021,drought,dry_spell_events_14d,0.32594305597359013,0.1585019523809503,0.48628725010724905,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Montana,2021,heat,season_tmean_mean,0.9510764384020186,0.3557973324753383,0.37409961818961945,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,North Dakota,2021,excess_rain,wet_days_1mm,0.2698411529954075,0.23337047619047557,0.8648439039038918,"drought,heat",False
+00_baseline_v1_raw_yield_scaa,Oats,South Dakota,2021,heat,heat_days_40,0.12172382966889515,0.05953238095238156,0.48907745602744734,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Minnesota,2021,drought,dry_spell_events_14d,0.3276705856830267,0.2911945238095255,0.8886806949807009,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Montana,2021,drought,hot_dry_days_30_1mm,0.23469010840714388,0.2049186190476197,0.8731455298155295,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,North Dakota,2021,drought,hot_dry_days_30_1mm,0.22311935183937254,0.21441409523809393,0.9609838567138467,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,South Dakota,2021,heat,heat_days_30,0.09907997584543411,0.09562547619047594,0.9651342299442298,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Washington,2021,drought,dry_spell_events_7d,0.03852616415478937,0.05897890476190466,1.530879236379226,"drought,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Colorado,2022,heat,season_tmean_mean,0.14231139923872577,0.20174999999999607,1.417665774345755,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Kansas,2022,drought,dry_spell_events_14d,0.59066805754982,0.38299423809523736,0.6484085827900616,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Barley,Montana,2022,drought,hot_dry_days_30_1mm,0.3566593877497096,0.22859666666666856,0.6409383140283111,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,Kansas,2022,heat,heat_days_30,0.44867600916983674,0.2564672857142878,0.5716090909090875,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Canola,Oklahoma,2022,drought,dry_spell_events_14d,0.22243167919974519,0.12497661904762,0.5618651960784333,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Kansas,2022,excess_rain,max_7day_rain,0.4847430762574914,0.2312919999999985,0.4771434834834818,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Minnesota,2022,frost_cold,frost_events_2d,0.35030099902597855,0.12643995238095224,0.3609465937365921,"drought,excess_rain,heat",False
+00_baseline_v1_raw_yield_scaa,Oats,Nebraska,2022,heat,season_tmax_mean,0.2071241402058727,0.08331204761904763,0.4022324367224359,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Oats,Oklahoma,2022,drought,dry_spell_events_14d,0.4378459824348281,0.348118476190476,0.795070618792973,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Colorado,2022,excess_rain,wet_days_1mm,0.12992449455815944,0.10247476190476253,0.788725499785498,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Kansas,2022,radiation,radiation_mean,0.7944511784993352,0.36883052380952325,0.4642582625482654,"drought,excess_rain,heat",False
+00_baseline_v1_raw_yield_scaa,Wheat,Montana,2022,heat,heatwave_events_3d_30,0.502646996832367,0.23806185714285874,0.47361639210639206,"drought,excess_rain,heat",True
+00_baseline_v1_raw_yield_scaa,Wheat,Nebraska,2022,radiation,radiation_mean,0.42693808427019525,0.4236549523809505,0.992310051480048,"drought,excess_rain,heat",False
+01_residual_target_scaa,Barley,South Dakota,2012,excess_rain,wet_days_1mm,0.4646735235213746,0.2694956931552303,0.5799678258252081,"drought,heat",False
+01_residual_target_scaa,Canola,North Dakota,2012,heat,heatwave_events_3d_30,0.583921658949785,0.1666923613256329,0.2854704201680722,"drought,heat",True
+01_residual_target_scaa,Oats,Kansas,2012,drought,rain_mean,0.25261940148744083,0.17447495030981885,0.6906633033033016,"drought,heat",True
+01_residual_target_scaa,Barley,Colorado,2021,excess_rain,wet_days_1mm,0.37184578853448275,0.49869247836548614,1.3411271385671224,"drought,heat",False
+01_residual_target_scaa,Barley,Minnesota,2021,heat,heatwave_events_3d_30,0.770140007503715,0.4723229250446291,0.6132948820248774,"drought,heat",True
+01_residual_target_scaa,Barley,Montana,2021,drought,rain_sum,0.27163725147412765,0.2152327236147284,0.7923534877734855,"drought,heat",True
+01_residual_target_scaa,Barley,North Dakota,2021,excess_rain,wet_days_1mm,0.6546693320553214,0.5964816899020355,0.9111190347490283,"drought,heat",False
+01_residual_target_scaa,Barley,South Dakota,2021,excess_rain,wet_days_1mm,0.33601289580635646,0.4722430421854795,1.4054313036176809,"drought,heat",False
+01_residual_target_scaa,Barley,Washington,2021,excess_rain,wet_days_1mm,0.37837032712469454,0.5484026769058464,1.4493807722007666,"drought,heat",False
+01_residual_target_scaa,Canola,Minnesota,2021,heat,heatwave_events_3d_30,1.0,0.3793561576354565,0.3793561576354565,"drought,heat",True
+01_residual_target_scaa,Canola,Montana,2021,excess_rain,max_7day_rain,0.05552548826321628,0.02495435103704957,0.4494215506715493,"drought,heat",False
+01_residual_target_scaa,Canola,North Dakota,2021,excess_rain,wet_days_1mm,0.8735249099470656,0.4563315417145335,0.5224024369747928,"drought,heat",False
+01_residual_target_scaa,Canola,Washington,2021,excess_rain,wet_days_1mm,0.4953365706902202,0.3195657988943993,0.6451488095238043,"drought,heat",False
+01_residual_target_scaa,Oats,Minnesota,2021,heat,heatwave_events_3d_30,0.6926252119943989,0.33681480969570665,0.48628725010724905,"drought,heat",True
+01_residual_target_scaa,Oats,Montana,2021,heat,heatwave_events_3d_30,0.23055542475549068,0.0862506963725746,0.37409961818961945,"drought,heat",True
+01_residual_target_scaa,Oats,North Dakota,2021,excess_rain,wet_days_1mm,0.5451184225941703,0.47144234468627344,0.8648439039038913,"drought,heat",False
+01_residual_target_scaa,Oats,South Dakota,2021,excess_rain,wet_days_1mm,0.5897700131197253,0.2884432176578695,0.48907745602744734,"drought,heat",False
+01_residual_target_scaa,Wheat,Minnesota,2021,heat,heatwave_events_3d_30,0.5340732915848756,0.4746206239362778,0.8886806949807009,"drought,heat",True
+01_residual_target_scaa,Wheat,Montana,2021,drought,rain_sum,0.2533624818615407,0.22122231846037244,0.8731455298155295,"drought,heat",True
+01_residual_target_scaa,Wheat,North Dakota,2021,excess_rain,wet_days_1mm,0.5760129898045411,0.5535391844596416,0.9609838567138467,"drought,heat",False
+01_residual_target_scaa,Wheat,South Dakota,2021,excess_rain,wet_days_1mm,0.441425469872247,0.42603483094292094,0.9651342299442298,"drought,heat",False
+01_residual_target_scaa,Wheat,Washington,2021,excess_rain,wet_days_1mm,0.21775755923010942,0.333360525989994,1.530879236379226,"drought,heat",False
+01_residual_target_scaa,Barley,Colorado,2022,excess_rain,wet_days_1mm,0.3126787033127616,0.4432738960533128,1.417665774345755,"drought,excess_rain,heat",True
+01_residual_target_scaa,Barley,Kansas,2022,heat,heatwave_events_3d_35,0.9500237362191749,0.6160035444187946,0.6484085827900616,"drought,excess_rain,heat",True
+01_residual_target_scaa,Barley,Montana,2022,drought,rain_mean,0.2638242394601297,0.16909506323937695,0.6409383140283111,"drought,excess_rain,heat",True
+01_residual_target_scaa,Canola,Kansas,2022,excess_rain,wet_days_1mm,0.9335273036082982,0.533612693354351,0.5716090909090875,"drought,excess_rain,heat",True
+01_residual_target_scaa,Canola,Oklahoma,2022,excess_rain,wet_days_1mm,0.5197347947312083,0.29202089235043466,0.5618651960784333,"drought,excess_rain,heat",True
+01_residual_target_scaa,Oats,Kansas,2022,excess_rain,wet_days_1mm,0.6787938421591945,0.32388205841497475,0.4771434834834818,"drought,excess_rain,heat",True
+01_residual_target_scaa,Oats,Minnesota,2022,excess_rain,max_3day_rain,0.49888781044883107,0.18007185583821197,0.36094659373659166,"drought,excess_rain,heat",True
+01_residual_target_scaa,Oats,Nebraska,2022,excess_rain,wet_days_1mm,0.7163269215588909,0.2881299231485139,0.4022324367224359,"drought,excess_rain,heat",True
+01_residual_target_scaa,Oats,Oklahoma,2022,excess_rain,wet_days_1mm,0.3941179443790298,0.31335159791484973,0.795070618792973,"drought,excess_rain,heat",True
+01_residual_target_scaa,Wheat,Colorado,2022,excess_rain,wet_days_1mm,0.2746025725124117,0.2165860512472354,0.788725499785498,"drought,excess_rain,heat",True
+01_residual_target_scaa,Wheat,Kansas,2022,drought,dry_days_1mm,0.5820987843184198,0.27024417023912706,0.4642582625482654,"drought,excess_rain,heat",True
+01_residual_target_scaa,Wheat,Montana,2022,heat,heatwave_events_3d_30,0.5176192717220044,0.24515297195771368,0.4736163921063916,"drought,excess_rain,heat",True
+01_residual_target_scaa,Wheat,Nebraska,2022,drought,rain_mean,0.7079346559676768,0.7024906749077952,0.9923100514800476,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Barley,South Dakota,2012,drought,max_dry_spell_1mm,0.5209476330442269,0.3021328661054486,0.5799678258252081,"drought,heat",True
+02_grouped_driver_scaa,Canola,North Dakota,2012,drought,hot_dry_days_30_1mm,0.5839216589497851,0.16669236132563292,0.2854704201680722,"drought,heat",True
+02_grouped_driver_scaa,Oats,Kansas,2012,drought,dry_days_1mm,0.34570276867766775,0.23876421617601518,0.6906633033033016,"drought,heat",True
+02_grouped_driver_scaa,Barley,Colorado,2021,heat,heatwave_events_3d_30,0.5582068575716923,0.7486263656236689,1.3411271385671224,"drought,heat",True
+02_grouped_driver_scaa,Barley,Minnesota,2021,heat,heat_days_30,0.7388467032018515,0.4531309016746491,0.6132948820248774,"drought,heat",True
+02_grouped_driver_scaa,Barley,Montana,2021,heat,heatwave_events_3d_30,0.5934540712321853,0.47022540317419653,0.7923534877734855,"drought,heat",True
+02_grouped_driver_scaa,Barley,North Dakota,2021,drought,dry_spell_events_7d,0.793944011062339,0.7233775010038902,0.9111190347490283,"drought,heat",True
+02_grouped_driver_scaa,Barley,South Dakota,2021,excess_rain,wet_days_1mm,0.5377309893135878,0.7557439653066209,1.4054313036176809,"drought,heat",False
+02_grouped_driver_scaa,Barley,Washington,2021,drought,hot_dry_days_30_1mm,0.4591722573548576,0.6655154409381526,1.4493807722007666,"drought,heat",True
+02_grouped_driver_scaa,Canola,Minnesota,2021,heat,heat_days_30,0.9815331205176331,0.37235063319150874,0.3793561576354565,"drought,heat",True
+02_grouped_driver_scaa,Canola,Montana,2021,drought,hot_dry_days_30_1mm,0.6845370712519552,0.30764571205421454,0.4494215506715493,"drought,heat",True
+02_grouped_driver_scaa,Canola,North Dakota,2021,drought,dry_spell_events_7d,1.0,0.5224024369747928,0.5224024369747928,"drought,heat",True
+02_grouped_driver_scaa,Canola,Washington,2021,drought,hot_dry_days_30_1mm,0.6907593056176694,0.4456425436867291,0.6451488095238043,"drought,heat",True
+02_grouped_driver_scaa,Oats,Minnesota,2021,heat,heat_days_30,0.5252953587847592,0.2554444355175413,0.48628725010724905,"drought,heat",True
+02_grouped_driver_scaa,Oats,Montana,2021,drought,hot_dry_days_30_1mm,0.8698865874578902,0.3254242402362677,0.37409961818961945,"drought,heat",True
+02_grouped_driver_scaa,Oats,North Dakota,2021,drought,dry_spell_events_7d,0.7329136220151301,0.6338558780879061,0.8648439039038913,"drought,heat",True
+02_grouped_driver_scaa,Oats,South Dakota,2021,excess_rain,wet_days_1mm,0.9008350151829048,0.44057809752610194,0.48907745602744734,"drought,heat",False
+02_grouped_driver_scaa,Wheat,Minnesota,2021,heat,heat_days_30,0.4718481067748406,0.41932230345399335,0.8886806949807009,"drought,heat",True
+02_grouped_driver_scaa,Wheat,Montana,2021,heat,heatwave_events_3d_30,0.595892164088603,0.5203005793260658,0.8731455298155295,"drought,heat",True
+02_grouped_driver_scaa,Wheat,North Dakota,2021,drought,dry_spell_events_7d,0.7023847810130461,0.6749804357550278,0.9609838567138467,"drought,heat",True
+02_grouped_driver_scaa,Wheat,South Dakota,2021,excess_rain,wet_days_1mm,0.6861946701014568,0.6622699645202044,0.9651342299442298,"drought,heat",False
+02_grouped_driver_scaa,Wheat,Washington,2021,heat,heat_days_35,0.49098151052148603,0.7516333999034515,1.530879236379226,"drought,heat",True
+02_grouped_driver_scaa,Barley,Colorado,2022,excess_rain,heavy_rain_days_25,0.36829860085445437,0.5221243211707882,1.417665774345755,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Barley,Kansas,2022,heat,heatwave_events_3d_35,0.5610350492641573,0.3637799411889246,0.6484085827900616,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Barley,Montana,2022,heat,heat_days_30,0.655246111557489,0.4199723380152637,0.6409383140283111,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Canola,Kansas,2022,heat,heatwave_events_3d_35,0.5459769273959838,0.3120853751261552,0.5716090909090875,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Canola,Oklahoma,2022,heat,heat_days_35,0.7067869940525663,0.39711901299903163,0.5618651960784333,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Oats,Kansas,2022,excess_rain,max_3day_rain,0.4981104868746344,0.2376701728670162,0.4771434834834818,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Oats,Minnesota,2022,frost_cold,frost_days_0,0.3563611565849431,0.1286273456093674,0.36094659373659166,"drought,excess_rain,heat",False
+02_grouped_driver_scaa,Oats,Nebraska,2022,drought,dry_spell_events_14d,0.5111243271818418,0.20559078359046778,0.4022324367224359,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Oats,Oklahoma,2022,heat,heat_days_35,0.5047830393712391,0.4013381634690888,0.795070618792973,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Wheat,Colorado,2022,drought,dry_spell_events_7d,0.6853791240652134,0.5405759921708823,0.788725499785498,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Wheat,Kansas,2022,heat,heatwave_events_3d_30,0.46247966237793026,0.2147100045194863,0.4642582625482654,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Wheat,Montana,2022,heat,heat_days_30,0.8085449693279648,0.38294015122888375,0.4736163921063916,"drought,excess_rain,heat",True
+02_grouped_driver_scaa,Wheat,Nebraska,2022,drought,max_dry_spell_1mm,0.5319891791784219,0.5278982097773681,0.9923100514800476,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Barley,South Dakota,2012,heat,max_consecutive_heat_days_35,0.5924870324128482,0.34362341601810914,0.5799678258252081,"drought,heat",True
+03_observed_analog_counterfactual,Canola,North Dakota,2012,excess_rain,heavy_rain_days_10,0.583921658949785,0.1666923613256329,0.2854704201680722,"drought,heat",False
+03_observed_analog_counterfactual,Oats,Kansas,2012,heat,heatwave_events_3d_30,0.50381151181918,0.3479641229952653,0.6906633033033016,"drought,heat",True
+03_observed_analog_counterfactual,Barley,Colorado,2021,drought,max_dry_spell_1mm,0.7449103594449534,0.9990194988514169,1.3411271385671224,"drought,heat",True
+03_observed_analog_counterfactual,Barley,Minnesota,2021,heat,heat_days_30,1.0,0.6132948820248774,0.6132948820248774,"drought,heat",True
+03_observed_analog_counterfactual,Barley,Montana,2021,heat,growing_degree_days_base5,0.8896624976258722,0.7049271829351301,0.7923534877734855,"drought,heat",True
+03_observed_analog_counterfactual,Barley,North Dakota,2021,heat,heat_days_35,0.9590152044477792,0.8737770073861026,0.9111190347490283,"drought,heat",True
+03_observed_analog_counterfactual,Barley,South Dakota,2021,heat,max_consecutive_heat_days_35,0.7621467427014648,1.0711448901428888,1.4054313036176809,"drought,heat",True
+03_observed_analog_counterfactual,Barley,Washington,2021,heat,heatwave_events_3d_35,0.7565971115792958,1.0965973058256693,1.4493807722007666,"drought,heat",True
+03_observed_analog_counterfactual,Canola,Minnesota,2021,heat,heat_days_30,1.0,0.3793561576354565,0.3793561576354565,"drought,heat",True
+03_observed_analog_counterfactual,Canola,Montana,2021,heat,heatwave_events_3d_30,1.0,0.4494215506715493,0.4494215506715493,"drought,heat",True
+03_observed_analog_counterfactual,Canola,North Dakota,2021,heat,heat_days_35,1.0,0.5224024369747928,0.5224024369747928,"drought,heat",True
+03_observed_analog_counterfactual,Canola,Washington,2021,heat,heatwave_events_3d_35,1.0,0.6451488095238043,0.6451488095238043,"drought,heat",True
+03_observed_analog_counterfactual,Oats,Minnesota,2021,heat,heat_days_30,0.883630729769009,0.4296983576896331,0.48628725010724905,"drought,heat",True
+03_observed_analog_counterfactual,Oats,Montana,2021,heat,growing_degree_days_base5,1.0,0.37409961818961945,0.37409961818961945,"drought,heat",True
+03_observed_analog_counterfactual,Oats,North Dakota,2021,heat,heat_days_35,0.9046142035344699,0.7823500793116602,0.8648439039038913,"drought,heat",True
+03_observed_analog_counterfactual,Oats,South Dakota,2021,heat,heatwave_events_3d_35,1.0,0.48907745602744734,0.48907745602744734,"drought,heat",True
+03_observed_analog_counterfactual,Wheat,Minnesota,2021,heat,heat_days_30,0.7360713514069714,0.6541324001237311,0.8886806949807009,"drought,heat",True
+03_observed_analog_counterfactual,Wheat,Montana,2021,heat,growing_degree_days_base5,0.828299586643443,0.7232260814257732,0.8731455298155295,"drought,heat",True
+03_observed_analog_counterfactual,Wheat,North Dakota,2021,heat,heat_days_35,0.8855343705438318,0.8509842346578801,0.9609838567138467,"drought,heat",True
+03_observed_analog_counterfactual,Wheat,South Dakota,2021,heat,heatwave_events_3d_35,1.0,0.9651342299442298,0.9651342299442298,"drought,heat",True
+03_observed_analog_counterfactual,Wheat,Washington,2021,heat,heat_days_35,0.6312540393217861,0.966373701678238,1.530879236379226,"drought,heat",True
+03_observed_analog_counterfactual,Barley,Colorado,2022,excess_rain,heavy_rain_days_25,0.6929407797927454,0.9823584271606337,1.417665774345755,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Barley,Kansas,2022,excess_rain,max_3day_rain,0.9500237362191748,0.6160035444187945,0.6484085827900616,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Barley,Montana,2022,heat,heat_days_30,0.8458542870821941,0.5421404206760806,0.6409383140283111,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Canola,Kansas,2022,drought,dry_days_1mm,0.9830125245528126,0.5618988955118803,0.5716090909090875,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Canola,Oklahoma,2022,heat,max_consecutive_heat_days_35,1.0,0.5618651960784333,0.5618651960784333,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Oats,Kansas,2022,excess_rain,max_3day_rain,0.9221140210350166,0.4399806961656084,0.4771434834834818,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Oats,Minnesota,2022,excess_rain,heavy_rain_days_25,0.4988878104488311,0.180071855838212,0.36094659373659166,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Oats,Nebraska,2022,drought,dry_spell_events_14d,0.9709726283454347,0.3905566862901724,0.4022324367224359,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Oats,Oklahoma,2022,heat,max_consecutive_heat_days_35,0.8081009984352009,0.6424973608730945,0.795070618792973,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Wheat,Colorado,2022,drought,dry_spell_events_7d,0.8861754970116915,0.6989492117782085,0.788725499785498,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Wheat,Kansas,2022,heat,max_consecutive_heat_days_30,1.0,0.4642582625482654,0.4642582625482654,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Wheat,Montana,2022,heat,heat_days_30,1.0,0.4736163921063916,0.4736163921063916,"drought,excess_rain,heat",True
+03_observed_analog_counterfactual,Wheat,Nebraska,2022,heat,max_consecutive_heat_days_30,0.7624417707508592,0.7565786327843237,0.9923100514800476,"drought,excess_rain,heat",True

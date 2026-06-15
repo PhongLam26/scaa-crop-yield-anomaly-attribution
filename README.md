@@ -52,6 +52,36 @@ The run writes reproducible outputs to:
 5. Train early-warning classifiers using early-season and early+mid-season feature
    groups, with a calibration-derived conformal-style probability interval.
 
+## Improvement Experiments
+
+After the V1 run, execute the experiment suite:
+
+```powershell
+python scripts/run_improvement_experiments.py
+```
+
+This writes `improve_target/`, with one folder per method:
+
+- `00_baseline_v1_raw_yield_scaa`
+- `01_residual_target_scaa`
+- `02_grouped_driver_scaa`
+- `03_observed_analog_counterfactual`
+- `04_crop_specific_vulnerability_profiles`
+- `05_early_mid_warning_improved`
+
+The most important global files are:
+
+- `improve_target/COMPARISON_REPORT.md`
+- `improve_target/PAPER_CONTRIBUTION_DECISION.md`
+- `improve_target/method_scorecard.csv`
+- `improve_target/crop_driver_claims.csv`
+- `improve_target/event_validation_2012_2021_2022.csv`
+
+Use `02_grouped_driver_scaa` as the paper-friendly main attribution method if it
+remains the top sparse/grouped method. Use `03_observed_analog_counterfactual` as
+robustness evidence because it replaces the full weather vector with a real
+normal season.
+
 ## Git Push Setup
 
 This folder is intended to be its own repository.
