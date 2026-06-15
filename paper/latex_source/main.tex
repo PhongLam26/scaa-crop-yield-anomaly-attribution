@@ -8,6 +8,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{float}
+\usepackage{placeins}
+\usepackage{orcidlink}
 \usepackage{hyperref}
 \usepackage[numbers,sort&compress]{natbib}
 \hypersetup{colorlinks=true,allcolors=black}
@@ -24,10 +26,10 @@
 
 \title{\textbf{Sparse Counterfactual Attribution of Crop-Yield Anomalies\\to Extreme-Weather Drivers}}
 \author{
-Tran Dai Phong Lam~\href{https://orcid.org/0009-0003-9320-8782}{[0009-0003-9320-8782]}\thanks{Corresponding author.},
-Thu Le~\href{https://orcid.org/0009-0008-3480-8311}{[0009-0008-3480-8311]}\\
-Nguyen Quoc Hung~\href{https://orcid.org/0009-0002-7538-7978}{[0009-0002-7538-7978]},
-Nguyen Trung Trinh~\href{https://orcid.org/0009-0003-5566-3469}{[0009-0003-5566-3469]}\\[0.6em]
+Tran Dai Phong Lam~\orcidlink{0009-0003-9320-8782}\thanks{Corresponding author.},
+Thu Le~\orcidlink{0009-0008-3480-8311}\\
+Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978},
+Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
 \small FPT University, Ho Chi Minh City, Vietnam\\
 \small \href{mailto:phonglam2599@gmail.com}{\texttt{phonglam2599@gmail.com}},
 \href{mailto:thulvn@fpt.edu.vn}{\texttt{thulvn@fpt.edu.vn}}\\
@@ -241,6 +243,7 @@ flagged as low-yield anomalies. The anomaly timeline highlights 2012, 2021, and 
 as event years used for the consistency check (Figure~\ref{fig:anomaly_timeline}).
 
 \input{tables/table03_model_performance.tex}
+\FloatBarrier
 
 \begin{figure}[!htbp]
   \centering
@@ -300,6 +303,8 @@ Table~\ref{tab:top_claims}. For example, North Dakota Canola in 2012 is attribut
 drought/dry-spell stress, with a modelled recovery of 0.183 t ha$^{-1}$, or 64.0\% of
 the observed detrended yield shortfall.
 
+\input{tables/table05_top_event_claims.tex}
+
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig06_grouped_driver_attribution.png}
@@ -307,7 +312,7 @@ the observed detrended yield shortfall.
   \label{fig:grouped}
 \end{figure}
 
-\input{tables/table05_top_event_claims.tex}
+\FloatBarrier
 
 \subsection{Event-Year Consistency Check}
 We pre-specified broad expected stress groups for 2012, 2021, and 2022 using external
