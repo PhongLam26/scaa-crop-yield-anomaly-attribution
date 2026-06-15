@@ -258,6 +258,16 @@ def predict_rows(model: Pipeline, rows: list[pd.Series], numeric: list[str], cat
     return model.predict(pd.DataFrame([r[numeric + categorical].to_dict() for r in rows]))
 
 
+def regression_summary(y_true: pd.Series | np.ndarray, pred: pd.Series | np.ndarray) -> dict[str, float]:
+    y = np.asarray(y_true, dtype=float)
+    p = np.asarray(pred, dtype=float)
+    return {
+        "r2": r2_score_manual(y, p),
+        "rmse_t_ha": float(math.sqrt(np.mean((y - p) ** 2))),
+        "mae_t_ha": float(np.mean(np.abs(y - p))),
+    }
+
+
 def fit_residual_model(scored: pd.DataFrame, features: list[str]) -> tuple[Pipeline, list[str], list[str], dict[str, Any]]:
     numeric, categorical = residual_columns(features)
     train = scored[scored["year"] <= 2015].copy()
@@ -265,11 +275,11 @@ def fit_residual_model(scored: pd.DataFrame, features: list[str]) -> tuple[Pipel
     model = make_regressor(numeric, categorical)
     model.fit(train[numeric + categorical], train["trend_residual_t_ha"])
     pred = model.predict(test[numeric + categorical])
+    summary = regression_summary(test["trend_residual_t_ha"], pred)
     metrics = {
-        "residual_r2_2016_2025": r2_score_manual(test["trend_residual_t_ha"], pred),
-        "residual_rmse_2016_2025": float(
-            math.sqrt(np.mean((test["trend_residual_t_ha"].to_numpy(dtype=float) - pred) ** 2))
-        ),
+        "residual_r2_2016_2025": summary["r2"],
+        "residual_rmse_2016_2025": summary["rmse_t_ha"],
+        "residual_mae_2016_2025": summary["mae_t_ha"],
         "n_train": len(train),
         "n_test": len(test),
     }
@@ -752,11 +762,24 @@ def run_grouped_scaa_temporal_holdout(
     stats_map = feasible_stats(scored, features)
     records: list[dict[str, Any]] = []
     detail_rows: list[dict[str, Any]] = []
+    validation_rows: list[pd.DataFrame] = []
+
+    forward_train = scored[scored["year"] <= 2015].copy()
+    forward_test = scored[scored["year"] >= 2016].copy()
+    forward_model = make_regressor(numeric, categorical)
+    forward_model.fit(forward_train[numeric + categorical], forward_train["trend_residual_t_ha"])
+    forward_pred = forward_model.predict(forward_test[numeric + categorical])
+    forward_summary = regression_summary(forward_test["trend_residual_t_ha"], forward_pred)
 
     for heldout_year, event_rows in anomalies.sort_values(["year", "crop", "region"]).groupby("year", sort=True):
         train = scored[scored["year"] != heldout_year].copy()
         holdout_model = make_regressor(numeric, categorical)
         holdout_model.fit(train[numeric + categorical], train["trend_residual_t_ha"])
+        heldout_rows = scored[scored["year"] == heldout_year].copy()
+        heldout_rows["predicted_residual_t_ha"] = holdout_model.predict(heldout_rows[numeric + categorical])
+        heldout_rows["heldout_year"] = int(heldout_year)
+        heldout_rows["train_rows"] = int(len(train))
+        validation_rows.append(heldout_rows)
 
         for _, row in event_rows.iterrows():
             stats = stats_map[(row["region"], row["window"])]
@@ -829,8 +852,62 @@ def run_grouped_scaa_temporal_holdout(
 
     attr = pd.DataFrame(records)
     details = pd.DataFrame(detail_rows)
+    validation_predictions = pd.concat(validation_rows, ignore_index=True)
+    all_holdout = regression_summary(
+        validation_predictions["trend_residual_t_ha"],
+        validation_predictions["predicted_residual_t_ha"],
+    )
+    anomaly_holdout = validation_predictions[validation_predictions["is_low_yield_anomaly"]].copy()
+    anomaly_summary = regression_summary(
+        anomaly_holdout["trend_residual_t_ha"],
+        anomaly_holdout["predicted_residual_t_ha"],
+    )
+    residual_validation = pd.DataFrame(
+        [
+            {
+                "model": "Residual ExtraTrees",
+                "target": "trend_residual_t_ha",
+                "protocol": "forward_time_train_1990_2015_test_2016_2025",
+                "n_train": int(len(forward_train)),
+                "n_test": int(len(forward_test)),
+                **forward_summary,
+                "interpretation": "Residual-model robustness under a forward-time split.",
+            },
+            {
+                "model": "Residual ExtraTrees",
+                "target": "trend_residual_t_ha",
+                "protocol": "retrospective_leave_one_anomaly_year_out_all_rows",
+                "n_train": f"{int(validation_predictions['train_rows'].min())}-{int(validation_predictions['train_rows'].max())}",
+                "n_test": int(len(validation_predictions)),
+                **all_holdout,
+                "interpretation": "Same year-exclusion protocol as grouped SCAA, evaluated on all rows in held-out anomaly years.",
+            },
+            {
+                "model": "Residual ExtraTrees",
+                "target": "trend_residual_t_ha",
+                "protocol": "retrospective_leave_one_anomaly_year_out_anomaly_rows",
+                "n_train": f"{int(validation_predictions['train_rows'].min())}-{int(validation_predictions['train_rows'].max())}",
+                "n_test": int(len(anomaly_holdout)),
+                **anomaly_summary,
+                "interpretation": "Same protocol evaluated only on low-yield anomaly rows that are explained by SCAA.",
+            },
+        ]
+    )
     attr.to_csv(paths.outputs / "temporal_holdout_attributions.csv", index=False)
     details.to_csv(paths.outputs / "temporal_holdout_feature_changes.csv", index=False)
+    residual_validation.to_csv(paths.outputs / "residual_model_validation.csv", index=False)
+    validation_predictions[
+        [
+            "crop",
+            "region",
+            "year",
+            "heldout_year",
+            "train_rows",
+            "trend_residual_t_ha",
+            "predicted_residual_t_ha",
+            "is_low_yield_anomaly",
+        ]
+    ].to_csv(paths.outputs / "residual_model_validation_predictions.csv", index=False)
     common_claim_columns(attr, "06_grouped_driver_scaa_temporal_holdout").to_csv(
         paths.outputs / "crop_driver_claims.csv", index=False
     )
@@ -859,7 +936,12 @@ def run_grouped_scaa_temporal_holdout(
         "Temporal-Holdout Grouped-Driver SCAA",
         "Main paper method: grouped SCAA with event-year holdout residual models.",
         attr,
-        {"driver_groups": ", ".join(groups), "unique_heldout_years": int(attr["heldout_year"].nunique())},
+        {
+            "driver_groups": ", ".join(groups),
+            "unique_heldout_years": int(attr["heldout_year"].nunique()),
+            "residual_forward_r2": float(forward_summary["r2"]),
+            "residual_leave_one_year_out_r2": float(all_holdout["r2"]),
+        },
     )
     return attr, attribution_summary("06_grouped_driver_scaa_temporal_holdout", attr, 10, 10, 9)
 
@@ -1328,6 +1410,63 @@ def event_validation_rows(method: str, attr: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
+def build_event_consistency_null_baselines(event_validation: pd.DataFrame) -> pd.DataFrame:
+    temporal = event_validation[event_validation["method"] == "06_grouped_driver_scaa_temporal_holdout"].copy()
+    if temporal.empty:
+        return pd.DataFrame()
+
+    def expected_match_for_driver(driver: str) -> float:
+        return float(
+            temporal["year"].map(lambda y: driver in EXPECTED_EVENT_GROUPS.get(int(y), set())).mean()
+        )
+
+    driver_frequency = temporal["driver_group"].value_counts(normalize=True)
+    most_frequent = str(driver_frequency.index[0])
+    random_expected = []
+    for year in temporal["year"]:
+        expected = EXPECTED_EVENT_GROUPS.get(int(year), set())
+        random_expected.append(float(sum(driver_frequency.get(group, 0.0) for group in expected)))
+
+    rows = [
+        {
+            "method": "Always drought",
+            "expected_match_rate": expected_match_for_driver("drought"),
+            "median_recoverable_fraction": "",
+            "n_event_rows": int(len(temporal)),
+            "interpretation": "Trivial baseline; high values mean broad drought labels are easy to match.",
+        },
+        {
+            "method": "Always heat",
+            "expected_match_rate": expected_match_for_driver("heat"),
+            "median_recoverable_fraction": "",
+            "n_event_rows": int(len(temporal)),
+            "interpretation": "Trivial baseline; high values mean broad heat labels are easy to match.",
+        },
+        {
+            "method": f"Most frequent driver ({most_frequent})",
+            "expected_match_rate": expected_match_for_driver(most_frequent),
+            "median_recoverable_fraction": "",
+            "n_event_rows": int(len(temporal)),
+            "interpretation": "Majority-driver baseline using the temporal-holdout SCAA event-year outputs.",
+        },
+        {
+            "method": "Driver-frequency random",
+            "expected_match_rate": float(np.mean(random_expected)),
+            "median_recoverable_fraction": "",
+            "n_event_rows": int(len(temporal)),
+            "interpretation": "Expected match if drivers are sampled from the temporal-holdout event-year frequency distribution.",
+        },
+        {
+            "method": "Retrospective leave-one-event-year-out grouped SCAA",
+            "expected_match_rate": float(temporal["expected_match"].mean()),
+            "median_recoverable_fraction": float(temporal["recoverable_fraction"].median()),
+            "n_event_rows": int(len(temporal)),
+            "interpretation": "Main diagnostic attribution method; evaluated against the same broad expected stress groups.",
+        },
+    ]
+    return pd.DataFrame(rows)
+
+
 def attribution_summary(
     method: str,
     attr: pd.DataFrame,
@@ -1400,11 +1539,13 @@ def write_global_reports(
     event_validation: pd.DataFrame,
     vulnerability: pd.DataFrame,
 ) -> None:
+    null_baselines = build_event_consistency_null_baselines(event_validation)
     scorecard.to_csv(improve_root / "method_scorecard.csv", index=False)
     all_claims.to_csv(improve_root / "crop_driver_claims.csv", index=False)
     event_validation.to_csv(improve_root / "event_validation_2012_2021_2022.csv", index=False)
+    null_baselines.to_csv(improve_root / "event_consistency_null_baselines.csv", index=False)
     vulnerability.to_csv(improve_root / "crop_specific_vulnerability_profiles.csv", index=False)
-    write_comparison_report(improve_root, scorecard, all_claims, event_validation, vulnerability)
+    write_comparison_report(improve_root, scorecard, all_claims, event_validation, null_baselines, vulnerability)
     write_decision_report(improve_root, scorecard, all_claims, vulnerability)
 
 
@@ -1413,6 +1554,7 @@ def write_comparison_report(
     scorecard: pd.DataFrame,
     all_claims: pd.DataFrame,
     event_validation: pd.DataFrame,
+    null_baselines: pd.DataFrame,
     vulnerability: pd.DataFrame,
 ) -> None:
     lines = [
@@ -1447,6 +1589,10 @@ def write_comparison_report(
         match = event_validation.groupby("method")["expected_match"].mean().sort_values(ascending=False)
         for method, rate in match.items():
             lines.append(f"- {method}: {rate:.1%} of event-year attributions match expected heat/drought/moisture groups.")
+    if len(null_baselines):
+        lines.extend(["", "## Event-Year Null Baselines", ""])
+        for _, r in null_baselines.iterrows():
+            lines.append(f"- {r['method']}: {float(r['expected_match_rate']):.1%}.")
     lines.extend(["", "## Crop Vulnerability Highlights", ""])
     for _, r in vulnerability.sort_values("median_effect_t_ha").head(8).iterrows():
         lines.append(
@@ -1578,7 +1724,12 @@ def run_improvement_suite(root: Path | None = None) -> None:
         improve_root / "PAPER_CONTRIBUTION_DECISION.md",
         improve_root / "crop_driver_claims.csv",
         improve_root / "event_validation_2012_2021_2022.csv",
+        improve_root / "event_consistency_null_baselines.csv",
         improve_root / "method_scorecard.csv",
+        improve_root
+        / "06_grouped_driver_scaa_temporal_holdout"
+        / "outputs"
+        / "residual_model_validation.csv",
     ]
     missing = [str(p) for p in required_global if not p.exists()]
     if missing:

@@ -1,4 +1,4 @@
 method,year,n_events,expected_match_rate,median_recoverable
-06_grouped_driver_scaa_temporal_holdout,2012,3,1.0,0.488
-06_grouped_driver_scaa_temporal_holdout,2021,19,1.0,0.18
-06_grouped_driver_scaa_temporal_holdout,2022,13,0.769,0.182
+Leave-one-year-out grouped SCAA,2012,3,1.0,0.488
+Leave-one-year-out grouped SCAA,2021,19,1.0,0.18
+Leave-one-year-out grouped SCAA,2022,13,0.769,0.182

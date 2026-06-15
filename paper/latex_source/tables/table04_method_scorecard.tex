@@ -1,19 +1,17 @@
 \begin{table}[H]
 \centering
-\caption{Method comparison by raw metrics; composite scores are not used in the manuscript.}
+\caption{Attribution-method comparison by raw metrics; composite scores are not used in the manuscript.}
 \label{tab:method_scorecard}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \toprule
 method & median\_recoverable\_fraction & weather\_driven\_rate & event\_expected\_match\_rate \\
 \midrule
-00\_baseline\_v1\_raw\_yield\_scaa & 0.379 & 0.262 & 0.829 \\
-01\_residual\_target\_scaa & 0.482 & 0.472 & 0.629 \\
-02\_grouped\_driver\_scaa & 0.589 & 0.734 & 0.886 \\
-06\_grouped\_driver\_scaa\_temporal\_holdout & 0.116 & 0.056 & 0.914 \\
-03\_observed\_analog\_counterfactual & 0.853 & 0.972 & 0.971 \\
-04\_crop\_specific\_vulnerability\_profiles &  &  &  \\
-05\_early\_mid\_warning\_improved &  &  &  \\
+Raw-yield SCAA & 0.379 & 0.262 & 0.829 \\
+Residual-target SCAA & 0.482 & 0.472 & 0.629 \\
+Grouped-driver SCAA & 0.589 & 0.734 & 0.886 \\
+Leave-one-year-out grouped SCAA & 0.116 & 0.056 & 0.914 \\
+Observed-analog counterfactual & 0.853 & 0.972 & 0.971 \\
 \bottomrule
 \end{tabular}%
 }

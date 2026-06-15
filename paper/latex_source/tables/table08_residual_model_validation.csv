@@ -1,0 +1,4 @@
+model,target,protocol,n_train,n_test,r2,rmse_t_ha,mae_t_ha
+Residual ExtraTrees,trend_residual_t_ha,Forward-time 2016-2025,914,343,0.093,0.431,0.326
+Residual ExtraTrees,trend_residual_t_ha,"Retrospective leave-one-year-out, all held-out rows",1220-1224,1222,0.085,0.369,0.284
+Residual ExtraTrees,trend_residual_t_ha,"Retrospective leave-one-year-out, anomaly rows",1220-1224,214,-5.152,0.562,0.496

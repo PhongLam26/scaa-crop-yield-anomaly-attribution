@@ -1,8 +1,6 @@
 method,median_recoverable_fraction,weather_driven_rate,event_expected_match_rate
-00_baseline_v1_raw_yield_scaa,0.379,0.262,0.829
-01_residual_target_scaa,0.482,0.472,0.629
-02_grouped_driver_scaa,0.589,0.734,0.886
-06_grouped_driver_scaa_temporal_holdout,0.116,0.056,0.914
-03_observed_analog_counterfactual,0.853,0.972,0.971
-04_crop_specific_vulnerability_profiles,,,
-05_early_mid_warning_improved,,,
+Raw-yield SCAA,0.379,0.262,0.829
+Residual-target SCAA,0.482,0.472,0.629
+Grouped-driver SCAA,0.589,0.734,0.886
+Leave-one-year-out grouped SCAA,0.116,0.056,0.914
+Observed-analog counterfactual,0.853,0.972,0.971

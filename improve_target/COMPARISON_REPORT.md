@@ -41,6 +41,14 @@ Note: `total_score` is kept for internal method triage only. The paper reports r
 - 00_baseline_v1_raw_yield_scaa: 82.9% of event-year attributions match expected heat/drought/moisture groups.
 - 01_residual_target_scaa: 62.9% of event-year attributions match expected heat/drought/moisture groups.
 
+## Event-Year Null Baselines
+
+- Always drought: 100.0%.
+- Always heat: 100.0%.
+- Most frequent driver (heat): 100.0%.
+- Driver-frequency random: 89.6%.
+- Retrospective leave-one-event-year-out grouped SCAA: 91.4%.
+
 ## Crop Vulnerability Highlights
 
 - Barley is most sensitive to heat: median effect -0.134 t/ha; Oklahoma (-0.253); South Dakota (-0.222); Kansas (-0.191).

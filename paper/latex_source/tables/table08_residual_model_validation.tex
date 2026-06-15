@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Residual-model validation for the attribution target.}
+\label{tab:residual_model_validation}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llllllll}
+\toprule
+model & target & protocol & n\_train & n\_test & r2 & rmse\_t\_ha & mae\_t\_ha \\
+\midrule
+Residual ExtraTrees & trend\_residual\_t\_ha & Forward-time 2016-2025 & 914 & 343 & 0.093 & 0.431 & 0.326 \\
+Residual ExtraTrees & trend\_residual\_t\_ha & Retrospective leave-one-year-out, all held-out rows & 1220-1224 & 1222 & 0.085 & 0.369 & 0.284 \\
+Residual ExtraTrees & trend\_residual\_t\_ha & Retrospective leave-one-year-out, anomaly rows & 1220-1224 & 214 & -5.152 & 0.562 & 0.496 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

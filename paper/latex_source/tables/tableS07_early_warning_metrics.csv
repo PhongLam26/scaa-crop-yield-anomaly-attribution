@@ -1,0 +1,3 @@
+stage,roc_auc,average_precision,brier_score,top_10_precision,top_20_precision,threshold_from_calibration
+Early-season,0.473,0.225,0.216,0.208,0.229,0.14
+Early + mid-season,0.597,0.301,0.185,0.333,0.333,0.16

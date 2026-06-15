@@ -7,6 +7,7 @@ This is the closest implementation of detrend -> anomaly -> counterfactual weath
 - Weather-driven rate at 0.5: 47.2%
 - residual_r2_2016_2025: 0.093
 - residual_rmse_2016_2025: 0.431
+- residual_mae_2016_2025: 0.326
 - n_train: 914
 - n_test: 343
 

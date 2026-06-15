@@ -1,0 +1,4 @@
+model,target,protocol,n_train,n_test,r2,rmse_t_ha,mae_t_ha,interpretation
+Residual ExtraTrees,trend_residual_t_ha,forward_time_train_1990_2015_test_2016_2025,914,343,0.09319039092699388,0.4307149875127467,0.3264320826297445,Residual-model robustness under a forward-time split.
+Residual ExtraTrees,trend_residual_t_ha,retrospective_leave_one_anomaly_year_out_all_rows,1220-1224,1222,0.08492946114863054,0.3686304028459904,0.2842922690243776,"Same year-exclusion protocol as grouped SCAA, evaluated on all rows in held-out anomaly years."
+Residual ExtraTrees,trend_residual_t_ha,retrospective_leave_one_anomaly_year_out_anomaly_rows,1220-1224,214,-5.151919946221894,0.5616536744048248,0.4961951241367547,Same protocol evaluated only on low-yield anomaly rows that are explained by SCAA.

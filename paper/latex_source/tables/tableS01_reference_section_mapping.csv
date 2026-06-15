@@ -5,4 +5,5 @@ Related work,Yield anomalies and detrending,Lu2017; Ray2015; Meng2024; Sjulgard2
 Related work,Interpretable ML for yield models,LundbergLee2017; Ribeiro2016; Mohan2025
 Method,Sparse and feasible counterfactual explanation,Wachter2018; Mothilal2020; Ustun2019; Poyiadzi2020; Verma2024
 Method and limitations,Event-attribution language and pitfalls,Hannart2016; Otto2017; Oldenborgh2021; OrtizBobea2021
+Data,Weather and yield data sources,NASAPOWER2025; USDANASSQuickStats
 Extension,Early warning and conformal uncertainty,Anderson2024; Meroni2021; Singh2024; Farag2025

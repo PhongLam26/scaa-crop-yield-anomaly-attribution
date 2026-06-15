@@ -5,6 +5,7 @@ The BibTeX file is derived from `paper/reference_pack/crop_yield_anomaly_attribu
 ## Core References Used In The Draft
 
 - Detrending and yield variability: Ray2015, Lu2017, Meng2024.
+- Data sources: NASAPOWER2025, USDANASSQuickStats.
 - Extreme-weather yield loss: Lesk2016, Zampieri2017, Vogel2019, Heino2023, Sjulgard2023.
 - Yield prediction baselines: Paudel2021, Meroni2021, Khaki2019, LengHall2020.
 - Counterfactual explanation: Wachter2018, Mothilal2020, Ustun2019, Poyiadzi2020, Verma2024.

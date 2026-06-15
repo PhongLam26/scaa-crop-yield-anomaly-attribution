@@ -21,6 +21,24 @@ FIGURES = LATEX / "figures"
 TABLES = LATEX / "tables"
 
 
+METHOD_LABELS = {
+    "00_baseline_v1_raw_yield_scaa": "Raw-yield SCAA",
+    "01_residual_target_scaa": "Residual-target SCAA",
+    "02_grouped_driver_scaa": "Grouped-driver SCAA",
+    "06_grouped_driver_scaa_temporal_holdout": "Leave-one-year-out grouped SCAA",
+    "03_observed_analog_counterfactual": "Observed-analog counterfactual",
+}
+
+
+METHOD_SHORT_LABELS = {
+    "00_baseline_v1_raw_yield_scaa": "Raw yield",
+    "01_residual_target_scaa": "Residual target",
+    "02_grouped_driver_scaa": "Grouped",
+    "06_grouped_driver_scaa_temporal_holdout": "LEO-year grouped",
+    "03_observed_analog_counterfactual": "Observed analog",
+}
+
+
 DRIVER_GROUPS = [
     {
         "driver_group": "heat",
@@ -57,6 +75,7 @@ REFERENCE_MAP = [
     ("Related work", "Interpretable ML for yield models", "LundbergLee2017; Ribeiro2016; Mohan2025"),
     ("Method", "Sparse and feasible counterfactual explanation", "Wachter2018; Mothilal2020; Ustun2019; Poyiadzi2020; Verma2024"),
     ("Method and limitations", "Event-attribution language and pitfalls", "Hannart2016; Otto2017; Oldenborgh2021; OrtizBobea2021"),
+    ("Data", "Weather and yield data sources", "NASAPOWER2025; USDANASSQuickStats"),
     ("Extension", "Early warning and conformal uncertainty", "Anderson2024; Meroni2021; Singh2024; Farag2025"),
 ]
 
@@ -110,6 +129,14 @@ def read_inputs() -> dict[str, pd.DataFrame]:
         "analog_attr": pd.read_csv(ROOT / "improve_target" / "03_observed_analog_counterfactual" / "outputs" / "observed_analog_attributions.csv"),
         "claims": pd.read_csv(ROOT / "improve_target" / "crop_driver_claims.csv"),
         "event_validation": pd.read_csv(ROOT / "improve_target" / "event_validation_2012_2021_2022.csv"),
+        "event_null_baselines": pd.read_csv(ROOT / "improve_target" / "event_consistency_null_baselines.csv"),
+        "residual_validation": pd.read_csv(
+            ROOT
+            / "improve_target"
+            / "06_grouped_driver_scaa_temporal_holdout"
+            / "outputs"
+            / "residual_model_validation.csv"
+        ),
         "vulnerability": pd.read_csv(ROOT / "improve_target" / "crop_specific_vulnerability_profiles.csv"),
         "warning": pd.read_csv(ROOT / "improve_target" / "05_early_mid_warning_improved" / "outputs" / "warning_metrics.csv"),
         "predictions": pd.read_csv(ROOT / "outputs" / "yield_predictions_2016_2021.csv"),
@@ -134,6 +161,18 @@ def validate_inputs(data: dict[str, pd.DataFrame]) -> None:
         raise AssertionError("Temporal-holdout grouped SCAA output is empty")
     if (temporal["recovered_gap_t_ha"] > temporal["yield_gap_t_ha"] + 1e-9).any():
         raise AssertionError("Temporal-holdout recovery exceeds observed detrended shortfall")
+    residual = data["residual_validation"]
+    if residual.empty or residual[["r2", "rmse_t_ha", "mae_t_ha"]].isna().any().any():
+        raise AssertionError("Residual-model validation table must contain non-empty R2, RMSE, and MAE")
+    nulls = data["event_null_baselines"]
+    required_null_methods = {
+        "Always drought",
+        "Always heat",
+        "Driver-frequency random",
+        "Retrospective leave-one-event-year-out grouped SCAA",
+    }
+    if not required_null_methods.issubset(set(nulls["method"])):
+        raise AssertionError("Event-year null baseline table is missing required methods")
 
 
 def write_csv_and_tex(df: pd.DataFrame, csv_path: Path, tex_path: Path, caption: str, label: str, index: bool = False) -> None:
@@ -285,7 +324,10 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     scorecard = data["scorecard"]
     grouped = data["temporal_attr"]
     event = data["event_validation"]
+    event_nulls = data["event_null_baselines"]
+    residual_validation = data["residual_validation"]
     vulnerability = data["vulnerability"]
+    warning = data["warning"]
 
     dataset_rows = []
     for crop, group in frame.groupby("crop"):
@@ -354,6 +396,25 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "tab:model_performance",
     )
 
+    residual_table = residual_validation[
+        ["model", "target", "protocol", "n_train", "n_test", "r2", "rmse_t_ha", "mae_t_ha"]
+    ].copy()
+    protocol_labels = {
+        "forward_time_train_1990_2015_test_2016_2025": "Forward-time 2016-2025",
+        "retrospective_leave_one_anomaly_year_out_all_rows": "Retrospective leave-one-year-out, all held-out rows",
+        "retrospective_leave_one_anomaly_year_out_anomaly_rows": "Retrospective leave-one-year-out, anomaly rows",
+    }
+    residual_table["protocol"] = residual_table["protocol"].map(protocol_labels).fillna(residual_table["protocol"])
+    for col in ["r2", "rmse_t_ha", "mae_t_ha"]:
+        residual_table[col] = residual_table[col].map(lambda x: round(float(x), 3))
+    write_csv_and_tex(
+        residual_table,
+        TABLES / "table08_residual_model_validation.csv",
+        TABLES / "table08_residual_model_validation.tex",
+        "Residual-model validation for the attribution target.",
+        "tab:residual_model_validation",
+    )
+
     score_cols = [
         "method",
         "median_recoverable_fraction",
@@ -361,13 +422,16 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "event_expected_match_rate",
     ]
     score_table = scorecard[score_cols].copy()
+    score_table = score_table[score_table["method"].isin(METHOD_LABELS)].copy()
+    score_table = score_table[score_table["median_recoverable_fraction"].notna()].copy()
+    score_table["method"] = score_table["method"].map(METHOD_LABELS)
     for col in score_cols[1:]:
         score_table[col] = score_table[col].map(lambda x: "" if pd.isna(x) else round(float(x), 3))
     write_csv_and_tex(
         score_table,
         TABLES / "table04_method_scorecard.csv",
         TABLES / "table04_method_scorecard.tex",
-        "Method comparison by raw metrics; composite scores are not used in the manuscript.",
+        "Attribution-method comparison by raw metrics; composite scores are not used in the manuscript.",
         "tab:method_scorecard",
     )
 
@@ -390,7 +454,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         top_claims,
         TABLES / "table05_top_event_claims.csv",
         TABLES / "table05_top_event_claims.tex",
-        "Top temporal-holdout grouped-SCAA crop-region-year attribution claims.",
+        "Top retrospective leave-one-year-out grouped-SCAA crop-region-year attribution claims.",
         "tab:top_claims",
     )
 
@@ -421,12 +485,26 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     )
     event_summary["expected_match_rate"] = event_summary["expected_match_rate"].round(3)
     event_summary["median_recoverable"] = event_summary["median_recoverable"].round(3)
+    event_summary["method"] = event_summary["method"].map(METHOD_LABELS).fillna(event_summary["method"])
     write_csv_and_tex(
         event_summary,
         TABLES / "tableS06_event_consistency_summary.csv",
         TABLES / "tableS06_event_consistency_summary.tex",
         "Temporal-holdout event-year consistency summary for 2012, 2021, and 2022.",
         "tab:event_consistency_summary",
+    )
+
+    null_table = event_nulls.copy()
+    null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: round(float(x), 3))
+    null_table["median_recoverable_fraction"] = null_table["median_recoverable_fraction"].map(
+        lambda x: "" if pd.isna(x) or x == "" else round(float(x), 3)
+    )
+    write_csv_and_tex(
+        null_table,
+        TABLES / "table09_event_null_baselines.csv",
+        TABLES / "table09_event_null_baselines.tex",
+        "Null baselines for event-year consistency checks.",
+        "tab:event_null_baselines",
     )
 
     vuln_table = vulnerability.sort_values("median_effect_t_ha").head(7)[
@@ -446,7 +524,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         threshold_table,
         TABLES / "tableS03_anomaly_threshold_sensitivity.csv",
         TABLES / "tableS03_anomaly_threshold_sensitivity.tex",
-        "Sensitivity of temporal-holdout SCAA summaries to the anomaly z-threshold.",
+        "Sensitivity of leave-one-event-year-out SCAA summaries to the anomaly z-threshold.",
         "tab:threshold_sensitivity",
     )
 
@@ -476,6 +554,34 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         TABLES / "tableS05_observed_crop_state_pairs.tex",
         "Observed crop-state support for vulnerability profiles.",
         "tab:observed_crop_state_pairs",
+    )
+
+    warning_table = warning[
+        [
+            "stage",
+            "roc_auc",
+            "average_precision",
+            "brier_score",
+            "top_10_precision",
+            "top_20_precision",
+            "threshold_from_calibration",
+        ]
+    ].copy()
+    warning_table["stage"] = warning_table["stage"].map(
+        {
+            "early_third": "Early-season",
+            "early_mid_two_thirds": "Early + mid-season",
+        }
+    ).fillna(warning_table["stage"])
+    for col in warning_table.columns:
+        if col != "stage":
+            warning_table[col] = warning_table[col].map(lambda x: round(float(x), 3))
+    write_csv_and_tex(
+        warning_table,
+        TABLES / "tableS07_early_warning_metrics.csv",
+        TABLES / "tableS07_early_warning_metrics.tex",
+        "Numeric early-warning performance corresponding to Figure 9.",
+        "tab:early_warning_metrics",
     )
 
     ref_map = pd.DataFrame(REFERENCE_MAP, columns=["paper_section", "use", "bib_keys"])
@@ -586,6 +692,9 @@ def fig_anomaly_timeline(anomalies: pd.DataFrame) -> None:
 
 def fig_method_scorecard(scorecard: pd.DataFrame) -> None:
     df = scorecard[["method", "median_recoverable_fraction", "weather_driven_rate", "event_expected_match_rate"]].copy()
+    df = df[df["method"].isin(METHOD_SHORT_LABELS)].copy()
+    df = df[df["median_recoverable_fraction"].notna()].copy()
+    df["method_label"] = df["method"].map(METHOD_SHORT_LABELS)
     df = df.sort_values("median_recoverable_fraction")
     x = np.arange(len(df))
     width = 0.25
@@ -594,7 +703,7 @@ def fig_method_scorecard(scorecard: pd.DataFrame) -> None:
     ax.bar(x, df["weather_driven_rate"], width, label="Weather-driven rate", color="#5f8f6b")
     ax.bar(x + width, df["event_expected_match_rate"], width, label="Event-year consistency", color="#c47f47")
     ax.set_xticks(x)
-    ax.set_xticklabels(df["method"], rotation=35, ha="right")
+    ax.set_xticklabels(df["method_label"], rotation=25, ha="right")
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("Rate or fraction")
     ax.set_title("Method comparison by raw metrics")
@@ -715,6 +824,12 @@ def write_manifest(data: dict[str, pd.DataFrame]) -> None:
         / "06_grouped_driver_scaa_temporal_holdout"
         / "outputs"
         / "temporal_holdout_attributions.csv",
+        ROOT
+        / "improve_target"
+        / "06_grouped_driver_scaa_temporal_holdout"
+        / "outputs"
+        / "residual_model_validation.csv",
+        ROOT / "improve_target" / "event_consistency_null_baselines.csv",
     ]
     lines = [
         "# Data Manifest",
@@ -755,7 +870,7 @@ def write_reproducibility() -> None:
         "python scripts/package_overleaf.py",
         "```",
         "",
-        "The paper uses `06_grouped_driver_scaa_temporal_holdout` as the main attribution method, keeps `02_grouped_driver_scaa` as an in-sample exploratory comparison, and uses `03_observed_analog_counterfactual` as a plausibility robustness check.",
+        "The paper uses `06_grouped_driver_scaa_temporal_holdout` as the implementation of retrospective leave-one-event-year-out grouped SCAA, keeps `02_grouped_driver_scaa` as an in-sample exploratory comparison, and uses `03_observed_analog_counterfactual` as a plausibility robustness check.",
         "",
         "The generated paper files are stored in `paper/latex_source/`; the Overleaf upload archive is stored in `paper/overleaf_zip/`.",
         "",
@@ -782,6 +897,7 @@ def write_reference_audit() -> None:
         "## Core References Used In The Draft",
         "",
         "- Detrending and yield variability: Ray2015, Lu2017, Meng2024.",
+        "- Data sources: NASAPOWER2025, USDANASSQuickStats.",
         "- Extreme-weather yield loss: Lesk2016, Zampieri2017, Vogel2019, Heino2023, Sjulgard2023.",
         "- Yield prediction baselines: Paudel2021, Meroni2021, Khaki2019, LengHall2020.",
         "- Counterfactual explanation: Wachter2018, Mothilal2020, Ustun2019, Poyiadzi2020, Verma2024.",
@@ -818,12 +934,15 @@ def assert_outputs() -> None:
         "table05_top_event_claims.tex",
         "table06_event_evidence_sources.tex",
         "table07_crop_vulnerability.tex",
+        "table08_residual_model_validation.tex",
+        "table09_event_null_baselines.tex",
         "tableS01_reference_section_mapping.tex",
         "tableS02_driver_group_features.tex",
         "tableS03_anomaly_threshold_sensitivity.tex",
         "tableS04_detrending_robustness.tex",
         "tableS05_observed_crop_state_pairs.tex",
         "tableS06_event_consistency_summary.tex",
+        "tableS07_early_warning_metrics.tex",
     ]
     missing = [str(FIGURES / name) for name in expected_figures if not (FIGURES / name).exists()]
     missing += [str(TABLES / name) for name in expected_tables if not (TABLES / name).exists()]
