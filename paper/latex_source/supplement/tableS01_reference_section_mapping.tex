@@ -1,11 +1,12 @@
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \caption{Reference mapping to manuscript sections.}
 \label{tab:reference_mapping}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lll}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.34\linewidth}X@{}}
 \toprule
-paper\_section & use & bib\_keys \\
+paper section & use & bib keys \\
 \midrule
 Introduction & Extreme weather and crop-yield losses & Lesk2016; Zampieri2017; Vogel2019; Ray2015 \\
 Related work & Machine-learning crop-yield prediction & Paudel2021; Meroni2021; Khaki2019; LengHall2020 \\
@@ -16,6 +17,5 @@ Method and limitations & Event-attribution language and pitfalls & Hannart2016; 
 Data & Weather and yield data sources & NASAPOWER2025; USDANASSQuickStats \\
 Extension & Early warning and conformal uncertainty & Anderson2024; Meroni2021; Singh2024; Farag2025 \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \end{table}

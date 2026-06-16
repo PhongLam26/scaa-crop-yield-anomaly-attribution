@@ -1,11 +1,12 @@
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \caption{Full feature list for each grouped-SCAA driver group.}
 \label{tab:driver_group_features}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{ll}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}X@{}}
 \toprule
-driver\_group & features \\
+driver group & features \\
 \midrule
 heat & heat\_days\_30, heat\_days\_35, heatwave\_events\_3d\_30, heat\_degree\_days\_30, season\_tmax\_mean \\
 drought & rain\_sum, rain\_mean, dry\_days\_1mm, max\_dry\_spell\_1mm, dry\_spell\_events\_7d, dry\_spell\_events\_14d, hot\_dry\_days\_30\_1mm \\
@@ -13,6 +14,5 @@ frost\_cold & frost\_days\_0, cold\_days\_5, min\_tmin, frost\_events\_2d, seaso
 excess\_rain & wet\_days\_1mm, heavy\_rain\_days\_10, heavy\_rain\_days\_20, max\_1day\_rain, max\_3day\_rain, max\_7day\_rain \\
 radiation & radiation\_sum, radiation\_mean \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \end{table}

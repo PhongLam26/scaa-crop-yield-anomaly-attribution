@@ -228,6 +228,36 @@ def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False,
     return "\n".join(lines) + "\n"
 
 
+def write_wrapped_table(
+    df: pd.DataFrame,
+    csv_path: Path,
+    tex_path: Path,
+    caption: str,
+    label: str,
+    colspec: str,
+    font_size: str = r"\small",
+    placement: str = "H",
+) -> None:
+    df.to_csv(TABLE_CSV / csv_path.name, index=False)
+    cols = list(df.columns)
+    lines = [
+        rf"\begin{{table}}[{placement}]",
+        r"\centering",
+        rf"\caption{{{latex_escape(caption)}}}",
+        rf"\label{{{label}}}",
+        font_size,
+        r"\renewcommand{\arraystretch}{1.15}",
+        rf"\begin{{tabularx}}{{\linewidth}}{{{colspec}}}",
+        r"\toprule",
+        " & ".join(latex_escape(c) for c in cols) + r" \\",
+        r"\midrule",
+    ]
+    for _, row in df.iterrows():
+        lines.append(" & ".join(latex_escape(row[c]) for c in cols) + r" \\")
+    lines.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table}"])
+    tex_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_event_null_table(df: pd.DataFrame) -> None:
     csv_path = TABLE_CSV / "table09_event_null_baselines.csv"
     tex_path = SUPPLEMENT / "tableS09_event_null_baselines.tex"
@@ -396,13 +426,16 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "Extreme-weather driver groups used by grouped SCAA.",
         "tab:driver_groups",
     )
-    driver_features_df = pd.DataFrame(DRIVER_GROUPS)[["driver_group", "features"]]
-    write_csv_and_tex(
+    driver_features_df = pd.DataFrame(DRIVER_GROUPS)[["driver_group", "features"]].rename(
+        columns={"driver_group": "driver group"}
+    )
+    write_wrapped_table(
         driver_features_df,
         SUPPLEMENT / "tableS02_driver_group_features.csv",
         SUPPLEMENT / "tableS02_driver_group_features.tex",
         "Full feature list for each grouped-SCAA driver group.",
         "tab:driver_group_features",
+        r"@{}>{\raggedright\arraybackslash}p{0.16\linewidth}X@{}",
     )
 
     metrics_rows = []
@@ -514,12 +547,21 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
 
     temporal_event = event[event["method"] == "06_grouped_driver_scaa_temporal_holdout"].copy()
     event_source_table = pd.DataFrame(EVENT_EVIDENCE)
-    write_csv_and_tex(
+    event_source_table = event_source_table.rename(
+        columns={
+            "expected_stress_group": "expected group",
+            "affected_region_crop_scope": "affected scope",
+            "external_source": "external source",
+            "pre_specified": "pre-specified",
+        }
+    )
+    write_wrapped_table(
         event_source_table,
         SUPPLEMENT / "tableS08_event_evidence_sources.csv",
         SUPPLEMENT / "tableS08_event_evidence_sources.tex",
         "External evidence used to pre-specify expected event-year stress groups.",
         "tab:event_evidence_sources",
+        r"@{}>{\raggedright\arraybackslash}p{0.07\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}X>{\raggedright\arraybackslash}p{0.26\linewidth}>{\raggedright\arraybackslash}p{0.09\linewidth}@{}",
     )
     event_summary = (
         temporal_event.groupby(["method", "year"], as_index=False)
@@ -612,12 +654,20 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
             }
         )
     crop_state_table = pd.DataFrame(crop_state_rows)
-    write_csv_and_tex(
+    crop_state_table = crop_state_table.rename(
+        columns={
+            "observed_crop_state_pairs": "crop-state pairs",
+            "observed_crop_state_year_rows": "rows",
+            "regions": "states",
+        }
+    )
+    write_wrapped_table(
         crop_state_table,
         SUPPLEMENT / "tableS05_observed_crop_state_pairs.csv",
         SUPPLEMENT / "tableS05_observed_crop_state_pairs.tex",
         "Observed crop-state support for vulnerability profiles.",
         "tab:observed_crop_state_pairs",
+        r"@{}>{\raggedright\arraybackslash}p{0.11\linewidth}ccX@{}",
     )
 
     warning_table = warning[
@@ -640,21 +690,33 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     for col in warning_table.columns:
         if col != "stage":
             warning_table[col] = warning_table[col].map(lambda x: round(float(x), 3))
-    write_csv_and_tex(
+    warning_table = warning_table.rename(
+        columns={
+            "roc_auc": "ROC AUC",
+            "average_precision": "AP",
+            "brier_score": "Brier",
+            "top_10_precision": "Top 10%",
+            "top_20_precision": "Top 20%",
+            "threshold_from_calibration": "Threshold",
+        }
+    )
+    write_wrapped_table(
         warning_table,
         SUPPLEMENT / "tableS07_early_warning_metrics.csv",
         SUPPLEMENT / "tableS07_early_warning_metrics.tex",
         "Numeric early-warning performance corresponding to Figure 9.",
         "tab:early_warning_metrics",
+        r"@{}>{\raggedright\arraybackslash}p{0.22\linewidth}cccccc@{}",
     )
 
-    ref_map = pd.DataFrame(REFERENCE_MAP, columns=["paper_section", "use", "bib_keys"])
-    write_csv_and_tex(
+    ref_map = pd.DataFrame(REFERENCE_MAP, columns=["paper section", "use", "bib keys"])
+    write_wrapped_table(
         ref_map,
         SUPPLEMENT / "tableS01_reference_section_mapping.csv",
         SUPPLEMENT / "tableS01_reference_section_mapping.tex",
         "Reference mapping to manuscript sections.",
         "tab:reference_mapping",
+        r"@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.34\linewidth}X@{}",
     )
 
 
@@ -821,6 +883,8 @@ def write_supplement_tex() -> None:
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{caption}
+\usepackage{array}
+\usepackage{tabularx}
 \usepackage{orcidlink}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,allcolors=black}

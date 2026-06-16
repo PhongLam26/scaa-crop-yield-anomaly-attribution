@@ -1,16 +1,16 @@
-\begin{table}[!htbp]
+\begin{table}[H]
 \centering
 \caption{External evidence used to pre-specify expected event-year stress groups.}
 \label{tab:event_evidence_sources}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lllll}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.07\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}X>{\raggedright\arraybackslash}p{0.26\linewidth}>{\raggedright\arraybackslash}p{0.09\linewidth}@{}}
 \toprule
-year & expected\_stress\_group & affected\_region\_crop\_scope & external\_source & pre\_specified \\
+year & expected group & affected scope & external source & pre-specified \\
 \midrule
 2012 & heat, drought & Central United States and Plains crop belt; crop-state rows in the processed frame & NOAA/NCEI Annual 2012 Drought Report; NWS 2012 drought summary & yes \\
 2021 & heat, drought & Northern Plains and Canadian Prairie drought context; U.S. crop-state rows in the processed frame & Drought.gov/NIDIS report on the 2020-2021 Northern Plains and Canadian Prairies drought & yes \\
 2022 & heat, drought, excess\_rain & U.S. drought and regional wetness episodes during the 2022 growing season & NOAA/NCEI Annual 2022 and August 2022 Drought Reports & yes \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabularx}
 \end{table}
