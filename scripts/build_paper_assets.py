@@ -173,9 +173,17 @@ def validate_inputs(data: dict[str, pd.DataFrame]) -> None:
         raise AssertionError("Event-year null baseline table is missing required methods")
 
 
-def write_csv_and_tex(df: pd.DataFrame, csv_path: Path, tex_path: Path, caption: str, label: str, index: bool = False) -> None:
+def write_csv_and_tex(
+    df: pd.DataFrame,
+    csv_path: Path,
+    tex_path: Path,
+    caption: str,
+    label: str,
+    index: bool = False,
+    placement: str = "!htbp",
+) -> None:
     df.to_csv(TABLE_CSV / csv_path.name, index=index)
-    tex_path.write_text(latex_table(df, caption, label, index=index), encoding="utf-8")
+    tex_path.write_text(latex_table(df, caption, label, index=index, placement=placement), encoding="utf-8")
 
 
 def latex_escape(value: object) -> str:
@@ -199,12 +207,12 @@ def latex_escape(value: object) -> str:
     return text
 
 
-def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False) -> str:
+def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False, placement: str = "!htbp") -> str:
     table = df.reset_index() if index else df.copy()
     cols = list(table.columns)
     alignment = "l" * len(cols)
     lines = [
-        r"\begin{table}[!htbp]",
+        rf"\begin{{table}}[{placement}]",
         r"\centering",
         rf"\caption{{{latex_escape(caption)}}}",
         rf"\label{{{label}}}",
@@ -493,13 +501,14 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
             "recoverable_fraction",
         ]
     ].copy()
+    top_claims = top_claims.rename(columns={"region": "state"})
     for col in ["yield_gap_t_ha", "recovered_gap_t_ha", "recoverable_fraction"]:
         top_claims[col] = top_claims[col].round(3)
     write_csv_and_tex(
         top_claims,
         TABLES / "table05_top_event_claims.csv",
         TABLES / "table05_top_event_claims.tex",
-        "Highest-recovery retrospective leave-one-event-year-out grouped-SCAA crop-region-year diagnostic cases.",
+        "Highest-recovery retrospective leave-one-event-year-out grouped-SCAA crop-state-year diagnostic cases.",
         "tab:top_claims",
     )
 
@@ -571,6 +580,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         TABLES / "table07_crop_vulnerability.tex",
         "Top crop-specific yield penalties under adverse observed weather extremes.",
         "tab:crop_vulnerability",
+        placement="H",
     )
 
     threshold_table = build_threshold_sensitivity(frame, grouped)
