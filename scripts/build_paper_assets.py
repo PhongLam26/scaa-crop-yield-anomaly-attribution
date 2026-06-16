@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import shutil
 from pathlib import Path
 
 import matplotlib
@@ -10,7 +12,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,7 @@ FIGURES = LATEX / "figures"
 TABLES = LATEX / "tables"
 SUPPLEMENT = LATEX / "supplement"
 TABLE_CSV = PAPER / "generated_table_csv"
+WORKFLOW_SOURCE = PAPER / "assets" / "fig01_method_workflow_clean.png"
 
 
 METHOD_LABELS = {
@@ -28,15 +30,6 @@ METHOD_LABELS = {
     "02_grouped_driver_scaa": "Grouped-driver SCAA",
     "06_grouped_driver_scaa_temporal_holdout": "Leave-one-event-year-out grouped SCAA",
     "03_observed_analog_counterfactual": "Observed-analog counterfactual",
-}
-
-
-METHOD_SHORT_LABELS = {
-    "00_baseline_v1_raw_yield_scaa": "Raw-yield SCAA",
-    "01_residual_target_scaa": "Residual-target SCAA",
-    "02_grouped_driver_scaa": "Grouped-driver SCAA",
-    "06_grouped_driver_scaa_temporal_holdout": "Leave-one-year-out grouped",
-    "03_observed_analog_counterfactual": "Observed analog",
 }
 
 
@@ -116,6 +109,8 @@ def ensure_dirs() -> None:
         stale.unlink()
     for old_csv in list(TABLES.glob("*.csv")) + list(SUPPLEMENT.glob("*.csv")) + list(TABLE_CSV.glob("*.csv")):
         old_csv.unlink()
+    for old_figure in FIGURES.glob("fig*.png"):
+        old_figure.unlink()
 
 
 def read_inputs() -> dict[str, pd.DataFrame]:
@@ -124,7 +119,6 @@ def read_inputs() -> dict[str, pd.DataFrame]:
         "yield_metrics": pd.read_csv(ROOT / "outputs" / "yield_model_metrics.csv"),
         "anomalies": pd.read_csv(ROOT / "outputs" / "low_yield_anomalies.csv"),
         "scorecard": pd.read_csv(ROOT / "improve_target" / "method_scorecard.csv"),
-        "grouped_attr": pd.read_csv(ROOT / "improve_target" / "02_grouped_driver_scaa" / "outputs" / "grouped_driver_attributions.csv"),
         "temporal_attr": pd.read_csv(
             ROOT
             / "improve_target"
@@ -132,7 +126,6 @@ def read_inputs() -> dict[str, pd.DataFrame]:
             / "outputs"
             / "temporal_holdout_attributions.csv"
         ),
-        "analog_attr": pd.read_csv(ROOT / "improve_target" / "03_observed_analog_counterfactual" / "outputs" / "observed_analog_attributions.csv"),
         "claims": pd.read_csv(ROOT / "improve_target" / "crop_driver_claims.csv"),
         "event_validation": pd.read_csv(ROOT / "improve_target" / "event_validation_2012_2021_2022.csv"),
         "event_null_baselines": pd.read_csv(ROOT / "improve_target" / "event_consistency_null_baselines.csv"),
@@ -145,7 +138,6 @@ def read_inputs() -> dict[str, pd.DataFrame]:
         ),
         "vulnerability": pd.read_csv(ROOT / "improve_target" / "crop_specific_vulnerability_profiles.csv"),
         "warning": pd.read_csv(ROOT / "improve_target" / "05_early_mid_warning_improved" / "outputs" / "warning_metrics.csv"),
-        "predictions": pd.read_csv(ROOT / "outputs" / "yield_predictions_2016_2021.csv"),
     }
 
 
@@ -346,6 +338,15 @@ def build_detrending_robustness(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def format_state_penalties_positive(value: object) -> str:
+    text = str(value)
+
+    def repl(match: re.Match[str]) -> str:
+        return f"({abs(float(match.group(1))):.3f})"
+
+    return re.sub(r"\((-?\d+(?:\.\d+)?)\)", repl, text)
+
+
 def build_tables(data: dict[str, pd.DataFrame]) -> None:
     frame = data["frame"]
     anomalies = data["anomalies"]
@@ -471,11 +472,30 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         score_table,
         TABLES / "table04_method_scorecard.csv",
         TABLES / "table04_method_scorecard.tex",
-        "Attribution-method comparison by raw metrics; composite scores are not used in the manuscript.",
+        "Comparison of attribution methods using recovery, weather-driven rate, and event-year agreement.",
         "tab:method_scorecard",
     )
 
-    top_claims = grouped.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(5)
+    representative_claims = [
+        ("Canola", "North Dakota", 2021),
+        ("Barley", "Montana", 2002),
+        ("Canola", "Minnesota", 2021),
+        ("Wheat", "Colorado", 2013),
+        ("Oats", "South Dakota", 2011),
+    ]
+    selected_claims = []
+    for crop, region, year in representative_claims:
+        match = grouped[
+            (grouped["crop"] == crop)
+            & (grouped["region"] == region)
+            & (grouped["year"].astype(int) == int(year))
+        ]
+        if not match.empty:
+            selected_claims.append(match.iloc[0])
+    if len(selected_claims) == len(representative_claims):
+        top_claims = pd.DataFrame(selected_claims)
+    else:
+        top_claims = grouped.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(5)
     top_claims = top_claims[
         [
             "crop",
@@ -494,7 +514,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         top_claims,
         TABLES / "table05_top_event_claims.csv",
         TABLES / "table05_top_event_claims.tex",
-        "Top retrospective leave-one-year-out grouped-SCAA crop-region-year attribution claims.",
+        "Representative retrospective leave-one-year-out grouped-SCAA crop-region-year attribution claims.",
         "tab:top_claims",
     )
 
@@ -547,15 +567,19 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     )[["Method", "Expected match rate", "Median recovery", "n event rows"]]
     write_event_null_table(null_table)
 
-    vuln_table = vulnerability.sort_values("median_effect_t_ha").head(7)[
-        ["crop", "driver_group", "median_effect_t_ha", "effect_direction", "states_most_sensitive"]
+    vuln_table = vulnerability.sort_values("median_effect_t_ha").head(3)[
+        ["crop", "driver_group", "median_effect_t_ha", "states_most_sensitive"]
     ].copy()
-    vuln_table["median_effect_t_ha"] = vuln_table["median_effect_t_ha"].round(3)
+    vuln_table["median_yield_penalty_t_ha"] = (-vuln_table["median_effect_t_ha"]).round(3)
+    vuln_table["states_largest_penalty"] = vuln_table["states_most_sensitive"].map(format_state_penalties_positive)
+    vuln_table = vuln_table[
+        ["crop", "driver_group", "median_yield_penalty_t_ha", "states_largest_penalty"]
+    ]
     write_csv_and_tex(
         vuln_table,
         TABLES / "table07_crop_vulnerability.csv",
         TABLES / "table07_crop_vulnerability.tex",
-        "Crop-specific vulnerability profiles under adverse observed weather extremes.",
+        "Top crop-specific yield penalties under adverse observed weather extremes.",
         "tab:crop_vulnerability",
     )
 
@@ -629,89 +653,15 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         ref_map,
         SUPPLEMENT / "tableS01_reference_section_mapping.csv",
         SUPPLEMENT / "tableS01_reference_section_mapping.tex",
-        "Reference-pack mapping to manuscript sections.",
+        "Reference mapping to manuscript sections.",
         "tab:reference_mapping",
     )
 
 
 def fig_method_workflow() -> None:
-    fig, ax = plt.subplots(figsize=(13.2, 4.8))
-    ax.axis("off")
-    ax.set_xlim(0, 1.08)
-    ax.set_ylim(0, 1)
-    box_w = 0.15
-    box_h = 0.22
-    boxes = [
-        ("Daily NASA POWER\nweather", 0.02, 0.58),
-        ("Growing-season\nextreme features", 0.22, 0.58),
-        ("USDA yield\nby crop-state-year", 0.02, 0.18),
-        ("Detrend each\ncrop-state series", 0.22, 0.18),
-        ("Low-yield\nanomaly events", 0.42, 0.18),
-        ("Residual weather\nmodel", 0.42, 0.58),
-        ("Grouped sparse\ncounterfactual", 0.64, 0.58),
-        ("Crop-specific event\nclaim and recovery", 0.89, 0.38),
-    ]
-    for text, x, y in boxes:
-        patch = FancyBboxPatch((x, y), box_w, box_h, boxstyle="round,pad=0.02", linewidth=1.3, edgecolor="#333333", facecolor="#f1f5f9")
-        ax.add_patch(patch)
-        ax.text(x + box_w / 2, y + box_h / 2, text, ha="center", va="center", fontsize=10)
-    arrows = [
-        ((0.17, 0.69), (0.22, 0.69)),
-        ((0.17, 0.29), (0.22, 0.29)),
-        ((0.37, 0.29), (0.42, 0.29)),
-        ((0.37, 0.69), (0.42, 0.69)),
-        ((0.57, 0.69), (0.64, 0.69)),
-        ((0.57, 0.29), (0.66, 0.60)),
-        ((0.79, 0.69), (0.865, 0.52)),
-    ]
-    for start, end in arrows:
-        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="->", mutation_scale=16, linewidth=1.2, color="#333333"))
-    ax.text(
-        0.5,
-        0.03,
-        "SCAA explains detrended low-yield events with sparse, feasible, physically grouped weather changes.",
-        ha="center",
-        fontsize=11,
-    )
-    fig.tight_layout()
-    fig.savefig(FIGURES / "fig01_method_workflow.png", dpi=220)
-    plt.close(fig)
-
-
-def fig_data_coverage(frame: pd.DataFrame) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8))
-    crop_counts = frame["crop"].value_counts().sort_index()
-    axes[0].bar(crop_counts.index, crop_counts.values, color="#4d7ea8")
-    axes[0].set_title("Observations by crop")
-    axes[0].set_ylabel("Crop-state-year rows")
-    axes[0].grid(axis="y", alpha=0.25)
-
-    pivot = frame.pivot_table(index="crop", columns="region", values="year", aggfunc="count").fillna(0)
-    im = axes[1].imshow(pivot.to_numpy(), aspect="auto", cmap="YlGnBu")
-    axes[1].set_xticks(range(len(pivot.columns)))
-    axes[1].set_xticklabels(pivot.columns, rotation=65, ha="right", fontsize=8)
-    axes[1].set_yticks(range(len(pivot.index)))
-    axes[1].set_yticklabels(pivot.index)
-    axes[1].set_title("Crop coverage across states")
-    fig.colorbar(im, ax=axes[1], label="Rows")
-    fig.tight_layout()
-    fig.savefig(FIGURES / "fig02_data_coverage.png", dpi=220)
-    plt.close(fig)
-
-
-def fig_prediction(predictions: pd.DataFrame) -> None:
-    fig, ax = plt.subplots(figsize=(6.3, 5.2))
-    ax.scatter(predictions["yield_t_ha"], predictions["predicted_yield_t_ha"], s=30, alpha=0.72, color="#4d7ea8")
-    lo = min(predictions["yield_t_ha"].min(), predictions["predicted_yield_t_ha"].min())
-    hi = max(predictions["yield_t_ha"].max(), predictions["predicted_yield_t_ha"].max())
-    ax.plot([lo, hi], [lo, hi], color="black", linewidth=1)
-    ax.set_xlabel("Observed yield (t/ha)")
-    ax.set_ylabel("Predicted yield (t/ha)")
-    ax.set_title("Forward-time test: 2016-2021")
-    ax.grid(alpha=0.25)
-    fig.tight_layout()
-    fig.savefig(FIGURES / "fig03_yield_prediction.png", dpi=220)
-    plt.close(fig)
+    if not WORKFLOW_SOURCE.exists():
+        raise FileNotFoundError(f"Missing workflow source image: {WORKFLOW_SOURCE}")
+    shutil.copyfile(WORKFLOW_SOURCE, FIGURES / "fig01_method_workflow.png")
 
 
 def fig_anomaly_timeline(anomalies: pd.DataFrame) -> None:
@@ -730,30 +680,6 @@ def fig_anomaly_timeline(anomalies: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-def fig_method_scorecard(scorecard: pd.DataFrame) -> None:
-    df = scorecard[["method", "median_recoverable_fraction", "weather_driven_rate", "event_expected_match_rate"]].copy()
-    df = df[df["method"].isin(METHOD_SHORT_LABELS)].copy()
-    df = df[df["median_recoverable_fraction"].notna()].copy()
-    df["method_label"] = df["method"].map(METHOD_SHORT_LABELS)
-    df = df.sort_values("median_recoverable_fraction")
-    x = np.arange(len(df))
-    width = 0.25
-    fig, ax = plt.subplots(figsize=(11, 5.2))
-    ax.bar(x - width, df["median_recoverable_fraction"], width, label="Median recovery", color="#4d7ea8")
-    ax.bar(x, df["weather_driven_rate"], width, label="Weather-driven rate", color="#5f8f6b")
-    ax.bar(x + width, df["event_expected_match_rate"], width, label="Event-year consistency", color="#c47f47")
-    ax.set_xticks(x)
-    ax.set_xticklabels(df["method_label"], rotation=25, ha="right")
-    ax.set_ylim(0, 1.05)
-    ax.set_ylabel("Rate or fraction")
-    ax.set_title("Method comparison by raw metrics")
-    ax.legend(loc="upper left", ncols=3, fontsize=8)
-    ax.grid(axis="y", alpha=0.25)
-    fig.tight_layout()
-    fig.savefig(FIGURES / "fig05_method_scorecard.png", dpi=220)
-    plt.close(fig)
-
-
 def fig_grouped_attribution(grouped: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.4))
     axes[0].hist(grouped["recoverable_fraction"], bins=np.linspace(0, 1, 16), color="#517b9d", edgecolor="white")
@@ -769,27 +695,6 @@ def fig_grouped_attribution(grouped: pd.DataFrame) -> None:
         ax.grid(alpha=0.25)
     fig.tight_layout()
     fig.savefig(FIGURES / "fig06_grouped_driver_attribution.png", dpi=220)
-    plt.close(fig)
-
-
-def fig_vulnerability(vulnerability: pd.DataFrame) -> None:
-    pivot = vulnerability.pivot(index="crop", columns="driver_group", values="median_effect_t_ha")
-    fig, ax = plt.subplots(figsize=(8.5, 4.8))
-    vmax = max(abs(float(np.nanmin(pivot.to_numpy()))), abs(float(np.nanmax(pivot.to_numpy()))), 0.1)
-    im = ax.imshow(pivot.to_numpy(), cmap="RdBu_r", aspect="auto", vmin=-vmax, vmax=vmax)
-    ax.set_xticks(range(len(pivot.columns)))
-    ax.set_xticklabels(pivot.columns, rotation=25, ha="right")
-    ax.set_yticks(range(len(pivot.index)))
-    ax.set_yticklabels(pivot.index)
-    for i, crop in enumerate(pivot.index):
-        for j, group in enumerate(pivot.columns):
-            value = pivot.loc[crop, group]
-            if pd.notna(value):
-                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=8)
-    ax.set_title("Crop-specific vulnerability under adverse observed extremes")
-    fig.colorbar(im, ax=ax, label="Median residual effect (t/ha)")
-    fig.tight_layout()
-    fig.savefig(FIGURES / "fig07_crop_driver_vulnerability.png", dpi=220)
     plt.close(fig)
 
 
@@ -833,12 +738,8 @@ def fig_warning(warning: pd.DataFrame) -> None:
 
 def build_figures(data: dict[str, pd.DataFrame]) -> None:
     fig_method_workflow()
-    fig_data_coverage(data["frame"])
-    fig_prediction(data["predictions"])
     fig_anomaly_timeline(data["anomalies"])
-    fig_method_scorecard(data["scorecard"])
     fig_grouped_attribution(data["temporal_attr"])
-    fig_vulnerability(data["vulnerability"])
     fig_event_validation(data["event_validation"])
     fig_warning(data["warning"])
 
@@ -990,12 +891,8 @@ Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
 def assert_outputs() -> None:
     expected_figures = [
         "fig01_method_workflow.png",
-        "fig02_data_coverage.png",
-        "fig03_yield_prediction.png",
         "fig04_anomaly_timeline.png",
-        "fig05_method_scorecard.png",
         "fig06_grouped_driver_attribution.png",
-        "fig07_crop_driver_vulnerability.png",
         "fig08_event_validation.png",
         "fig09_early_warning.png",
     ]
