@@ -26,16 +26,16 @@
 
 \title{\textbf{Sparse Counterfactual Attribution of Crop-Yield Anomalies\\to Extreme-Weather Drivers}}
 \author{
-Tran Dai Phong Lam~\orcidlink{0009-0003-9320-8782}\thanks{Corresponding author.},
-Thu Le~\orcidlink{0009-0008-3480-8311}\\
-Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978},
-Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
+\begin{tabular}{c}
+Tran Dai Phong Lam~\orcidlink{0009-0003-9320-8782}\thanks{Corresponding author.}, Thu Le~\orcidlink{0009-0008-3480-8311}\\
+Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978}, Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
 \small FPT University, Ho Chi Minh City, Vietnam\\
 \small \href{mailto:phonglam2599@gmail.com}{\texttt{phonglam2599@gmail.com}},
 \href{mailto:thulvn@fpt.edu.vn}{\texttt{thulvn@fpt.edu.vn}}\\
 \small
 \href{mailto:hungtvt2222@gmail.com}{\texttt{hungtvt2222@gmail.com}},
 \href{mailto:trinhnguyen112355@gmail.com}{\texttt{trinhnguyen112355@gmail.com}}
+\end{tabular}
 }
 \date{}
 
@@ -312,12 +312,17 @@ Retrospective leave-one-event-year-out grouped SCAA assigns a recovery fraction 
 dominant driver group to each low-yield anomaly (Figure~\ref{fig:grouped}). The median
 recoverable fraction is 0.116 and the mean is 0.157. Drought/dry-spell stress is the
 most frequent driver group, followed by heat exposure, excess rainfall or wetness,
-frost/cold stress, and radiation. The top crop-specific event claims are shown in
-Table~\ref{tab:top_claims}. For example, North Dakota Canola in 2021 is attributed to
-drought/dry-spell stress, with a modelled recovery of 0.085 t ha$^{-1}$, or 16.3\% of
+frost/cold stress, and radiation. The highest-recovery diagnostic cases are shown in
+Table~\ref{tab:top_claims}. For example, South Dakota Oats in 2006 is attributed to
+drought/dry-spell stress, with a modelled recovery of 0.273 t ha$^{-1}$, or 71.7\% of
 the observed detrended yield shortfall.
 
 \input{tables/table05_top_event_claims.tex}
+
+These rows should be read as diagnostic model-based cases rather than causal event
+attributions. A high recoverable fraction means that the fitted residual model assigns
+substantial bounded recovery to one physical driver-group edit, not that the driver is
+the sole real-world explanation for the yield shortfall.
 
 \begin{figure}[!htbp]
   \centering
@@ -348,11 +353,9 @@ Because the event-year labels are intentionally broad, simple null baselines can
 achieve high agreement. We therefore treat event-year consistency only as a sanity
 check that the diagnostic edits do not contradict externally documented stress
 categories, rather than as primary validation or evidence of superiority over trivial
-event labels. The null-baseline table is provided in the Supplementary Material.
-
-The detailed event-evidence table and event-year consistency panel are provided in the
-Supplementary Material to keep the main manuscript focused on the core diagnostic
-result.
+event labels. The null-baseline table, detailed event-evidence table, and event-year
+consistency panel are provided in the Supplementary Material to keep the main
+manuscript focused on the core diagnostic result.
 
 \subsection{Crop-Specific Vulnerability Profiles}
 The vulnerability profile answers which weather driver most reduces which crop in the
@@ -379,18 +382,13 @@ therefore not high recovery for every anomaly; it is a transparent event-level p
 that reports crop, state, year, driver group, dominant feature, recovered t ha$^{-1}$,
 and the residual-scale recovery formula.
 
-The residual model itself is weak on anomaly rows ($R^2=-5.152$), so high-recovery
-cases should be read as conservative diagnostic explanations within the fitted model
-rather than as evidence of broad residual-forecasting skill.
-
-The weak anomaly-row residual $R^2$ does not imply that the diagnostic exercise is
-meaningless; rather, it defines the appropriate interpretation. SCAA should not be
-used to forecast anomaly magnitudes prospectively. Its role is narrower: given a
-fitted residual model and a screened below-trend event, the method asks which
+The weak anomaly-row residual $R^2$ ($-5.152$) defines the scope of interpretation.
+SCAA should not be used to forecast anomaly magnitudes prospectively. Its narrower
+role is to ask, for a screened below-trend event and a fitted residual model, which
 physically grouped weather edit produces the largest bounded movement toward the
-trend line. For this reason, each claim is reported with the crop, state, year,
-driver group, dominant feature, recovered t ha$^{-1}$, and recoverable fraction,
-rather than as an unconditional causal attribution.
+trend line. For this reason, each event is reported with crop, state, year, driver
+group, dominant feature, recovered t ha$^{-1}$, and recoverable fraction, rather than
+as an unconditional real-world explanation.
 
 The threshold sensitivity analysis shows that the anomaly count changes from 214 at
 $z<-1.0$ to 85 at $z<-1.5$ and 30 at $z<-2.0$, while the leave-one-event-year-out
@@ -416,7 +414,7 @@ SCAA detects detrended low-yield anomalies and explains them through sparse,
 physically grouped weather counterfactuals on a raw residual scale. On U.S. Barley,
 Canola, Oats, and Wheat across 1990--2025, the retrospective leave-one-event-year-out
 grouped-SCAA protocol produces conservative crop-state-year claims such as
-drought/dry-spell stress in North Dakota Canola 2021, with explicit recovered
+drought/dry-spell stress in South Dakota Oats 2006, with explicit recovered
 t ha$^{-1}$ and recoverable fractions. The result is a reproducible bridge between
 crop-yield prediction, interpretable machine learning, and cautious diagnostic
 event-level weather-driver analysis.

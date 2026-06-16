@@ -477,26 +477,10 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "tab:method_scorecard",
     )
 
-    representative_claims = [
-        ("Canola", "North Dakota", 2021),
-        ("Barley", "Montana", 2002),
-        ("Canola", "Minnesota", 2021),
-        ("Wheat", "Colorado", 2013),
-        ("Oats", "South Dakota", 2011),
-    ]
-    selected_claims = []
-    for crop, region, year in representative_claims:
-        match = grouped[
-            (grouped["crop"] == crop)
-            & (grouped["region"] == region)
-            & (grouped["year"].astype(int) == int(year))
-        ]
-        if not match.empty:
-            selected_claims.append(match.iloc[0])
-    if len(selected_claims) == len(representative_claims):
-        top_claims = pd.DataFrame(selected_claims)
-    else:
-        top_claims = grouped.sort_values(["recoverable_fraction", "recovered_gap_t_ha"], ascending=False).head(5)
+    top_claims = grouped.sort_values(
+        ["recoverable_fraction", "recovered_gap_t_ha"],
+        ascending=[False, False],
+    ).head(5)
     top_claims = top_claims[
         [
             "crop",
@@ -515,7 +499,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         top_claims,
         TABLES / "table05_top_event_claims.csv",
         TABLES / "table05_top_event_claims.tex",
-        "Representative retrospective leave-one-year-out grouped-SCAA crop-region-year attribution claims.",
+        "Highest-recovery retrospective leave-one-event-year-out grouped-SCAA crop-region-year diagnostic cases.",
         "tab:top_claims",
     )
 
@@ -843,16 +827,16 @@ def write_supplement_tex() -> None:
 
 \title{\textbf{Supplementary Material}\\Sparse Counterfactual Attribution of Crop-Yield Anomalies}
 \author{
-Tran Dai Phong Lam~\orcidlink{0009-0003-9320-8782}\thanks{Corresponding author.},
-Thu Le~\orcidlink{0009-0008-3480-8311}\\
-Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978},
-Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
+\begin{tabular}{c}
+Tran Dai Phong Lam~\orcidlink{0009-0003-9320-8782}\thanks{Corresponding author.}, Thu Le~\orcidlink{0009-0008-3480-8311}\\
+Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978}, Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
 \small FPT University, Ho Chi Minh City, Vietnam\\
 \small \href{mailto:phonglam2599@gmail.com}{\texttt{phonglam2599@gmail.com}},
 \href{mailto:thulvn@fpt.edu.vn}{\texttt{thulvn@fpt.edu.vn}}\\
 \small
 \href{mailto:hungtvt2222@gmail.com}{\texttt{hungtvt2222@gmail.com}},
 \href{mailto:trinhnguyen112355@gmail.com}{\texttt{trinhnguyen112355@gmail.com}}
+\end{tabular}
 }
 \date{}
 
