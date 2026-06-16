@@ -85,12 +85,13 @@ Paper files are written to:
 - `paper/latex_source/figures/`
 - `paper/latex_source/tables/`
 - `paper/overleaf_zip/scaa_crop_yield_anomaly_attribution.zip`
-- `paper/DAP_new.pdf`
+- `paper/final_submission/DAP_final.pdf`
+- `paper/final_submission/supplement.pdf`
 - `paper/DATA_MANIFEST.md`
 - `paper/REPRODUCIBILITY.md`
 
-Upload the Overleaf zip and compile `main.tex`, or open the compiled
-`paper/DAP_new.pdf`.
+Upload the Overleaf zip and compile `main.tex`, or open the compiled final
+submission PDFs in `paper/final_submission/`.
 
 ## Git Push Setup
 
