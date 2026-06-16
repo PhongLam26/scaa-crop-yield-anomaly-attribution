@@ -713,7 +713,7 @@ def write_results_summary(
             "## Sparse Counterfactual Attribution",
             "",
             f"- Median weather-recoverable fraction: {median_recoverable:.3f}.",
-            f"- Weather-driven anomalies at threshold {WEATHER_DRIVEN_THRESHOLD:.1f}: {weather_driven_rate:.1%}.",
+            f"- High-recovery anomalies at phi >= {WEATHER_DRIVEN_THRESHOLD:.1f}: {weather_driven_rate:.1%}.",
             "- Most frequent dominant drivers:",
         ]
     )

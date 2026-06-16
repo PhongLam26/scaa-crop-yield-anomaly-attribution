@@ -53,15 +53,15 @@ and 1990--2025. A forward-time ExtraTrees yield model attains $R^2=0.809$ for
 2016--2021 and $R^2=0.808$ for 2019--2025. After crop-state detrending, 214 of 1,257
 observations are flagged as low-yield anomalies. The main submission protocol is
 retrospective leave-one-event-year-out grouped SCAA: for every anomaly year, the
-residual model is fitted after excluding all rows from that year. Under this stricter
-protocol, the median recoverable fraction is 0.116 and 5.6\% of anomalies (12 of 214)
-exceed a recovery threshold of $\phi \geq 0.5$. Residual-model validation is modest for
-all held-out event-year rows ($R^2=0.085$) and weak on anomaly rows ($R^2=-5.152$), so
-SCAA is not framed as a high-skill residual forecasting system. Event-year consistency
-is reported as a limited sanity check rather than primary validation because broad
-heat/drought labels are also matched by simple null baselines. The contribution is a
-reproducible, conservative workflow for retrospective model-based weather-driver
-attribution on a detrended yield-residual scale, not a new yield prediction model.
+residual model is fitted after excluding all rows from that year. Under this
+conservative protocol, recovery is intentionally lower than in-sample recovery,
+reflecting the difficulty of residual-scale anomaly attribution when the event year
+is excluded from model fitting. Event-year consistency is reported as a limited
+sanity check rather than primary validation because broad heat/drought labels are
+also matched by simple null baselines. The contribution is a reproducible workflow
+for transparent retrospective model-based weather-driver attribution on a detrended
+yield-residual scale, not a new yield prediction model or high-skill residual
+forecasting system.
 \end{abstract}
 
 \noindent\textbf{Keywords:} crop yield; extreme weather; counterfactual explanation; yield anomaly; interpretable machine learning; drought; heat stress.
@@ -136,7 +136,21 @@ are crop- and state-aware, with spring and winter windows represented in the pro
 frame.
 
 \input{tables/table01_dataset_summary.tex}
+
+Table~\ref{tab:dataset_summary} shows that the processed panel is moderately
+unbalanced across crops. Oats and Wheat provide the largest number of crop-state-year
+observations, while Canola has fewer observations and fewer states. This motivates
+reporting event-level claims with crop and state identifiers rather than aggregating
+all crops into a single global attribution statement.
+
 \input{tables/table02_driver_groups.tex}
+
+The driver groups in Table~\ref{tab:driver_groups} are used to avoid over-interpreting
+individual weather variables. Each counterfactual edit changes a physically related
+group of features, such as rainfall deficit and dry-spell persistence for drought,
+rather than selecting isolated variables independently. This grouping makes the
+diagnostic explanation more interpretable and reduces the risk of feature-level
+cherry-picking.
 
 \section{Method}
 \subsection{Yield Skill Baseline}
@@ -170,6 +184,13 @@ target is the raw detrended yield residual \texttt{trend\_residual\_t\_ha}, not 
 standardized residual. The fitted model maps weather features, crop, and state to
 predicted residual $\hat r_i$ on the same t ha$^{-1}$ scale.
 
+This protocol is designed for retrospective attribution rather than operational
+forecasting. Its purpose is to prevent the residual model from directly fitting the
+same calendar-year shock that is later explained. Thus, if a drought year affects
+many crop-state observations simultaneously, all rows from that year are removed
+before the counterfactual recovery for that year is computed. This makes the
+submitted recovery estimates more conservative than in-sample explanations.
+
 For an anomaly $i$, grouped SCAA evaluates driver groups one at a time. For a group
 $g$, all weather features in that group are moved toward their observed median for the
 same region-window support, giving a diagnostic edited feature vector
@@ -190,13 +211,24 @@ and the recoverable fraction is
     0, & \Delta_i = 0.
   \end{cases}
 \end{equation}
-A crop-state-year is labelled weather-driven when $\phi_i \geq 0.5$.
+A crop-state-year is labelled a high-recovery diagnostic case when $\phi_i \geq 0.5$.
+The anomaly flag uses the standardized residual $z_i$, whereas all SCAA recovery
+quantities use raw detrended residual and yield-gap units of t ha$^{-1}$.
 
 The grouped edit is a diagnostic sparse edit designed to isolate one physical driver
 group. It is not assumed to be a complete season that occurred historically. For that
 reason, we also report observed-analog counterfactuals: real non-anomalous seasons
 from the same crop-state, or the same region-window fallback, used as a plausibility
 check for weather-vector replacement.
+
+In summary, grouped SCAA proceeds in five steps: (1) detrend each crop-state yield
+series and screen low-yield anomalies using standardized residuals; (2) for each
+anomaly year, train a residual model after excluding all rows from that year; (3) for
+each anomaly and each driver group, replace the group features by feasible
+region-window medians while holding other features fixed; (4) compute the bounded
+improvement in predicted raw residual relative to the observed yield gap; and (5)
+assign the driver group with the largest recoverable fraction as the dominant
+diagnostic explanation.
 
 \subsection{Residual-Model Validation}
 Because grouped SCAA operates on the raw detrended residual scale, we separately
@@ -229,6 +261,12 @@ years used for the consistency check (Figure~\ref{fig:anomaly_timeline}).
 \input{tables/table03_model_performance.tex}
 \FloatBarrier
 
+The forward-time yield results are used only as a signal check. They show that the
+weather and crop-state features contain predictive information for yield levels, but
+they are not used as evidence that residual anomaly magnitudes can be forecast with
+high accuracy. The attribution task is therefore evaluated separately on the
+detrended residual scale.
+
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=\linewidth]{fig04_anomaly_timeline.png}
@@ -249,11 +287,17 @@ model.
 
 \input{tables/table08_residual_model_validation.tex}
 
+The residual-model validation results define the scope of the method. Residual-scale
+prediction is modest across all held-out rows and weak on anomaly rows, which means
+that SCAA should be interpreted as a conservative diagnostic recovery tool rather
+than a high-skill residual forecasting system. This is why the manuscript reports
+bounded recovery quantities and avoids causal or operational forecasting claims.
+
 \subsection{Method Comparison}
 Table~\ref{tab:method_scorecard} compares methods by raw metrics only. The
 retrospective leave-one-event-year-out method is more conservative than the in-sample
 grouped method: median recoverable fraction decreases from 0.589 to 0.116, and the
-weather-driven rate decreases from 73.4\% to 5.6\% (12 of 214 anomalies). This
+high-recovery rate decreases from 73.4\% to 5.6\% (12 of 214 anomalies). This
 reduction is expected because each event year is excluded before attribution. We
 therefore use leave-one-event-year-out grouped SCAA for the main submission claims,
 while the in-sample grouped result is treated as exploratory. Observed-analog
@@ -282,6 +326,13 @@ the observed detrended yield shortfall.
   \label{fig:grouped}
 \end{figure}
 
+Figure~\ref{fig:grouped} shows that most anomaly events have limited recoverable
+fractions under the conservative protocol, while a smaller subset achieves substantial
+recovery. This pattern is useful because it prevents the method from forcing a
+weather explanation for every low-yield anomaly. The driver-frequency panel indicates
+that drought/dry-spell stress is the most common dominant group, followed by heat
+exposure and excess rainfall or wetness.
+
 \FloatBarrier
 
 \subsection{Event-Year Consistency Check}
@@ -293,15 +344,11 @@ stress categories; it does not validate formal event drivers. Retrospective
 leave-one-event-year-out grouped SCAA matches the pre-specified expected groups in
 91.4\% of event-year rows: 100\% in 2012, 100\% in 2021, and 76.9\% in 2022.
 
-The null baselines in Table~\ref{tab:event_null_baselines} show why this result should
-be treated cautiously.
-
-\input{tables/table09_event_null_baselines.tex}
-
-The first three baselines show that the broad heat/drought labels are easy to match.
-Therefore, event-year consistency is retained only as a sanity check that SCAA does
-not contradict known stress categories, not as primary validation or evidence of
-superiority over trivial labels.
+Because the event-year labels are intentionally broad, simple null baselines can also
+achieve high agreement. We therefore treat event-year consistency only as a sanity
+check that the diagnostic edits do not contradict externally documented stress
+categories, rather than as primary validation or evidence of superiority over trivial
+event labels. The null-baseline table is provided in the Supplementary Material.
 
 The detailed event-evidence table and event-year consistency panel are provided in the
 Supplementary Material to keep the main manuscript focused on the core diagnostic
@@ -336,6 +383,15 @@ The residual model itself is weak on anomaly rows ($R^2=-5.152$), so high-recove
 cases should be read as conservative diagnostic explanations within the fitted model
 rather than as evidence of broad residual-forecasting skill.
 
+The weak anomaly-row residual $R^2$ does not imply that the diagnostic exercise is
+meaningless; rather, it defines the appropriate interpretation. SCAA should not be
+used to forecast anomaly magnitudes prospectively. Its role is narrower: given a
+fitted residual model and a screened below-trend event, the method asks which
+physically grouped weather edit produces the largest bounded movement toward the
+trend line. For this reason, each claim is reported with the crop, state, year,
+driver group, dominant feature, recovered t ha$^{-1}$, and recoverable fraction,
+rather than as an unconditional causal attribution.
+
 The threshold sensitivity analysis shows that the anomaly count changes from 214 at
 $z<-1.0$ to 85 at $z<-1.5$ and 30 at $z<-2.0$, while the leave-one-event-year-out
 median recoverable fraction remains close to 0.12 across thresholds. Detrending
@@ -360,7 +416,7 @@ SCAA detects detrended low-yield anomalies and explains them through sparse,
 physically grouped weather counterfactuals on a raw residual scale. On U.S. Barley,
 Canola, Oats, and Wheat across 1990--2025, the retrospective leave-one-event-year-out
 grouped-SCAA protocol produces conservative crop-state-year claims such as
-drought/dry-spell stress in North Dakota Canola 2012, with explicit recovered
+drought/dry-spell stress in North Dakota Canola 2021, with explicit recovered
 t ha$^{-1}$ and recoverable fractions. The result is a reproducible bridge between
 crop-yield prediction, interpretable machine learning, and cautious diagnostic
 event-level weather-driver analysis.

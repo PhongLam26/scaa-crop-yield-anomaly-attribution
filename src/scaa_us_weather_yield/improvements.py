@@ -400,7 +400,7 @@ def write_attribution_results(paths: MethodPaths, title: str, note: str, attr: p
         "",
         f"- Anomalies attributed: {len(attr)}",
         f"- Median recoverable fraction: {median_phi:.3f}",
-        f"- Weather-driven rate at {WEATHER_DRIVEN_THRESHOLD:.1f}: {wd_rate:.1%}",
+        f"- High-recovery rate at phi >= {WEATHER_DRIVEN_THRESHOLD:.1f}: {wd_rate:.1%}",
     ]
     for key, value in extra.items():
         if isinstance(value, float):
@@ -1443,7 +1443,7 @@ def build_event_consistency_null_baselines(event_validation: pd.DataFrame) -> pd
             "interpretation": "Trivial baseline; high values mean broad heat labels are easy to match.",
         },
         {
-            "method": f"Most frequent driver ({most_frequent})",
+            "method": f"Most frequent event-year SCAA driver ({most_frequent})",
             "expected_match_rate": expected_match_for_driver(most_frequent),
             "median_recoverable_fraction": "",
             "n_event_rows": int(len(temporal)),
@@ -1568,7 +1568,7 @@ def write_comparison_report(
         "",
         "`06_grouped_driver_scaa_temporal_holdout` is the main submission method. `02_grouped_driver_scaa` is kept as an in-sample exploratory comparison, and `03_observed_analog_counterfactual` is a plausibility robustness check.",
         "",
-        "| Method | Total | Idea | Crop-specific | Event | Recoverability | Plausibility | Median phi | Weather-driven |",
+        "| Method | Total | Idea | Crop-specific | Event | Recoverability | Plausibility | Median phi | High-recovery |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for _, r in scorecard.sort_values("total_score", ascending=False).iterrows():
@@ -1640,7 +1640,7 @@ def write_decision_report(improve_root: Path, scorecard: pd.DataFrame, all_claim
             "",
             "## Method Roles",
             "",
-            f"- `06_grouped_driver_scaa_temporal_holdout`: main submission method; median phi {main['median_recoverable_fraction']:.3f}, weather-driven rate {main['weather_driven_rate']:.1%}.",
+            f"- `06_grouped_driver_scaa_temporal_holdout`: main submission method; median phi {main['median_recoverable_fraction']:.3f}, high-recovery rate {main['weather_driven_rate']:.1%}.",
             f"- `02_grouped_driver_scaa`: in-sample exploratory grouped explanation; median phi {grouped['median_recoverable_fraction']:.3f}.",
             f"- `03_observed_analog_counterfactual`: robustness check; median phi {analog['median_recoverable_fraction']:.3f}.",
             "- `04_crop_specific_vulnerability_profiles`: use as a table answering which weather driver reduces each crop.",

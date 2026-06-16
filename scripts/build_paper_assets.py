@@ -222,7 +222,7 @@ def latex_table(df: pd.DataFrame, caption: str, label: str, index: bool = False)
 
 def write_event_null_table(df: pd.DataFrame) -> None:
     csv_path = TABLE_CSV / "table09_event_null_baselines.csv"
-    tex_path = TABLES / "table09_event_null_baselines.tex"
+    tex_path = SUPPLEMENT / "tableS09_event_null_baselines.tex"
     df.to_csv(csv_path, index=False)
     cols = ["Method", "Expected match rate", "Median recovery", "n event rows"]
     lines = [
@@ -468,11 +468,12 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     score_table["method"] = score_table["method"].map(METHOD_LABELS)
     for col in score_cols[1:]:
         score_table[col] = score_table[col].map(lambda x: "" if pd.isna(x) else round(float(x), 3))
+    score_table = score_table.rename(columns={"weather_driven_rate": "high_recovery_rate"})
     write_csv_and_tex(
         score_table,
         TABLES / "table04_method_scorecard.csv",
         TABLES / "table04_method_scorecard.tex",
-        "Comparison of attribution methods using recovery, weather-driven rate, and event-year agreement.",
+        "Comparison of attribution methods using recovery, high-recovery rate, and event-year agreement.",
         "tab:method_scorecard",
     )
 
@@ -552,6 +553,11 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         "Retrospective leave-one-event-year-out grouped SCAA": "Leave-one-event-year-out grouped SCAA",
     }
     null_table["method"] = null_table["method"].map(lambda x: null_method_labels.get(x, x))
+    null_table["method"] = null_table["method"].str.replace(
+        "Most frequent driver",
+        "Most frequent event-year SCAA driver",
+        regex=False,
+    )
     null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: f"{float(x):.3f}")
     null_table["median_recoverable_fraction"] = null_table["median_recoverable_fraction"].map(
         lambda x: "--" if pd.isna(x) or x == "" else f"{float(x):.3f}"
@@ -862,6 +868,7 @@ Nguyen Trung Trinh~\orcidlink{0009-0003-5566-3469}\\[0.6em]
 \section{Event-Year Consistency Details}
 \input{supplement/tableS08_event_evidence_sources.tex}
 \input{supplement/tableS06_event_consistency_summary.tex}
+\input{supplement/tableS09_event_null_baselines.tex}
 
 \begin{figure}[!htbp]
   \centering
@@ -904,7 +911,6 @@ def assert_outputs() -> None:
         "table05_top_event_claims.tex",
         "table07_crop_vulnerability.tex",
         "table08_residual_model_validation.tex",
-        "table09_event_null_baselines.tex",
     ]
     expected_supplement = [
         "tableS01_reference_section_mapping.tex",
@@ -915,6 +921,7 @@ def assert_outputs() -> None:
         "tableS06_event_consistency_summary.tex",
         "tableS07_early_warning_metrics.tex",
         "tableS08_event_evidence_sources.tex",
+        "tableS09_event_null_baselines.tex",
     ]
     missing = [str(FIGURES / name) for name in expected_figures if not (FIGURES / name).exists()]
     missing += [str(TABLES / name) for name in expected_tables if not (TABLES / name).exists()]
