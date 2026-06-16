@@ -66,9 +66,9 @@ REFERENCE_MAP = [
     ("Introduction", "Extreme weather and crop-yield losses", "Lesk2016; Zampieri2017; Vogel2019; Ray2015"),
     ("Related work", "Machine-learning crop-yield prediction", "Paudel2021; Meroni2021; Khaki2019; LengHall2020"),
     ("Related work", "Yield anomalies and detrending", "Lu2017; Ray2015; Meng2024; Sjulgard2023"),
-    ("Related work", "Interpretable ML for yield models", "LundbergLee2017; Ribeiro2016; Mohan2025"),
+    ("Related work", "Interpretable ML for yield models", "LundbergLee2017; Ribeiro2016"),
     ("Method", "Sparse and feasible counterfactual explanation", "Wachter2018; Mothilal2020; Ustun2019; Poyiadzi2020; Verma2024"),
-    ("Method and limitations", "Event-attribution language and pitfalls", "Hannart2016; Otto2017; Oldenborgh2021; OrtizBobea2021"),
+    ("Method and limitations", "Event-attribution language and pitfalls", "Hannart2016; Otto2017; Oldenborgh2021"),
     ("Data", "Weather and yield data sources", "NASAPOWER2025; USDANASSQuickStats"),
     ("Extension", "Early warning and conformal uncertainty", "Anderson2024; Meroni2021; Singh2024; Farag2025"),
 ]
@@ -78,21 +78,21 @@ EVENT_EVIDENCE = [
     {
         "year": 2012,
         "expected_stress_group": "heat, drought",
-        "affected_region_crop_scope": "Central United States and Plains crop belt; crop-state rows in the processed frame",
+        "affected_scope": "Central United States and Plains crop belt; crop-state rows in the processed frame",
         "external_source": "NOAA/NCEI Annual 2012 Drought Report; NWS 2012 drought summary",
         "pre_specified": "yes",
     },
     {
         "year": 2021,
         "expected_stress_group": "heat, drought",
-        "affected_region_crop_scope": "Northern Plains and Canadian Prairie drought context; U.S. crop-state rows in the processed frame",
+        "affected_scope": "Northern Plains and Canadian Prairie drought context; U.S. crop-state rows in the processed frame",
         "external_source": "Drought.gov/NIDIS report on the 2020-2021 Northern Plains and Canadian Prairies drought",
         "pre_specified": "yes",
     },
     {
         "year": 2022,
         "expected_stress_group": "heat, drought, excess_rain",
-        "affected_region_crop_scope": "U.S. drought and regional wetness episodes during the 2022 growing season",
+        "affected_scope": "U.S. drought and regional wetness episodes during the 2022 growing season",
         "external_source": "NOAA/NCEI Annual 2022 and August 2022 Drought Reports",
         "pre_specified": "yes",
     },
@@ -277,7 +277,17 @@ def write_event_null_table(df: pd.DataFrame) -> None:
     ]
     for _, row in df.iterrows():
         lines.append(" & ".join(latex_escape(row[c]) for c in cols) + r" \\")
-    lines.extend([r"\bottomrule", r"\end{tabular*}", r"\end{table}"])
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular*}",
+            r"\vspace{0.25em}",
+            r"\begin{minipage}{\linewidth}",
+            r"\footnotesize Note: the most-frequent-driver baseline is computed only on the 35 event-year rows used in the consistency check, not on the full low-yield anomaly set.",
+            r"\end{minipage}",
+            r"\end{table}",
+        ]
+    )
     tex_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -550,7 +560,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     event_source_table = event_source_table.rename(
         columns={
             "expected_stress_group": "expected group",
-            "affected_region_crop_scope": "affected scope",
+            "affected_scope": "affected scope",
             "external_source": "external source",
             "pre_specified": "pre-specified",
         }
@@ -590,7 +600,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
     null_table["method"] = null_table["method"].map(lambda x: null_method_labels.get(x, x))
     null_table["method"] = null_table["method"].str.replace(
         "Most frequent driver",
-        "Most frequent event-year SCAA driver",
+        "Most frequent SCAA driver among 2012/2021/2022 event rows",
         regex=False,
     )
     null_table["expected_match_rate"] = null_table["expected_match_rate"].map(lambda x: f"{float(x):.3f}")
@@ -704,7 +714,7 @@ def build_tables(data: dict[str, pd.DataFrame]) -> None:
         warning_table,
         SUPPLEMENT / "tableS07_early_warning_metrics.csv",
         SUPPLEMENT / "tableS07_early_warning_metrics.tex",
-        "Numeric early-warning performance corresponding to Figure 9.",
+        "Numeric early-warning performance for the exploratory early-warning extension.",
         "tab:early_warning_metrics",
         r"@{}>{\raggedright\arraybackslash}p{0.22\linewidth}cccccc@{}",
     )
@@ -885,6 +895,7 @@ def write_supplement_tex() -> None:
 \usepackage{caption}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{needspace}
 \usepackage{orcidlink}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,allcolors=black}
@@ -935,7 +946,10 @@ Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978}, Nguyen Trung Trinh~\orcidlink{
   \label{fig:event_consistency_supp}
 \end{figure}
 
+\Needspace{8\baselineskip}
 \section{Early-Warning Extension}
+This section reports the exploratory early-warning metrics referenced in the main manuscript.
+
 \input{supplement/tableS07_early_warning_metrics.tex}
 
 \begin{figure}[!htbp]
@@ -945,7 +959,10 @@ Nguyen Quoc Hung~\orcidlink{0009-0002-7538-7978}, Nguyen Trung Trinh~\orcidlink{
   \label{fig:warning_supp}
 \end{figure}
 
+\Needspace{8\baselineskip}
 \section{Reference Mapping}
+This section maps the cited references to their roles in the manuscript.
+
 \input{supplement/tableS01_reference_section_mapping.tex}
 
 \end{document}
